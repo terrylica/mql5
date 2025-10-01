@@ -81,22 +81,31 @@ class URLDiscovery:
                 await page.goto(url, timeout=self.config.extraction.timeout_ms)
                 await page.wait_for_timeout(3000)
 
-                # Try to click "more" link to load additional articles
-                try:
-                    logger.debug("Looking for 'more' link...")
-                    more_link = await page.query_selector('a:has-text("more")')
+                # Click "more" link repeatedly until all articles loaded
+                import random
+                click_count = 0
+                max_clicks = 20  # Safety limit
 
-                    if more_link:
-                        logger.debug("Found 'more' link, clicking...")
-                        await more_link.click()
-                        await page.wait_for_timeout(5000)  # Wait for content to load
-                        logger.debug("Additional content loaded")
-                    else:
-                        logger.debug("No 'more' link found - all articles visible")
+                try:
+                    while click_count < max_clicks:
+                        more_link = await page.query_selector('a:has-text("more")')
+
+                        if more_link and await more_link.is_visible():
+                            click_count += 1
+                            logger.debug(f"Click #{click_count}: Found 'more' link, clicking...")
+                            await more_link.click()
+
+                            # Random delay (3-7 seconds) to appear human-like
+                            delay = random.randint(3000, 7000)
+                            await page.wait_for_timeout(delay)
+                            logger.debug(f"Additional content loaded (waited {delay}ms)")
+                        else:
+                            logger.debug(f"No more 'more' links - all articles loaded after {click_count} clicks")
+                            break
 
                 except Exception as e:
-                    logger.warning(f"Failed to click 'more' link: {e}")
-                    # Continue anyway - some articles may still be visible
+                    logger.warning(f"Failed to click 'more' link after {click_count} clicks: {e}")
+                    # Continue anyway - articles already loaded are accessible
 
                 # Extract all article URLs
                 logger.debug("Extracting article URLs...")

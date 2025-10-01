@@ -13,29 +13,74 @@ Production-grade system for extracting MQL5 trading articles with:
 
 ---
 
+## ⚠️ Critical Constraints
+
+**NEVER run parallel extractions from MQL5.com** - triggers 24h+ IP blocks.
+
+---
+
+## 📦 Setup (First Time)
+
+### **Automated Setup (Recommended)**
+
+```bash
+# One-time setup - creates persistent virtual environment
+./setup.sh
+```
+
+This installs:
+- Python virtual environment (`.venv/`)
+- All dependencies (playwright, httpx, etc.)
+- Playwright Chromium browser
+
+**Total time:** ~30 seconds | **Disk usage:** ~230 MB
+
+### **Manual Setup**
+
+```bash
+# Create virtual environment
+uv venv
+
+# Install dependencies
+uv pip install --python .venv/bin/python -r requirements.txt
+
+# Install Playwright browsers
+.venv/bin/python -m playwright install chromium
+```
+
+**Why persistent venv?** See [docs/dependency_management.md](docs/dependency_management.md) for `uv` vs `uvx` comparison.
+
+---
+
 ## 🚀 Quick Start
 
 ### **Extract All Articles (Recommended)**
 ```bash
 # Auto-discover and extract all 77 articles
-python mql5_extract.py discover-and-extract
+.venv/bin/python mql5_extract.py discover-and-extract
 
 # With options
-python mql5_extract.py discover-and-extract --user-id 29210372 --verbose
+.venv/bin/python mql5_extract.py discover-and-extract --user-id 29210372 --verbose
 ```
 
 ### **Extract Single Article**
 ```bash
-python mql5_extract.py single https://www.mql5.com/en/articles/19625
+.venv/bin/python mql5_extract.py single https://www.mql5.com/en/articles/19625
 ```
 
 ### **Batch from File**
 ```bash
 # Create URL file first
-python mql5_extract.py discover-and-extract --save-urls urls.txt --dry-run
+.venv/bin/python mql5_extract.py discover-and-extract --save-urls urls.txt --dry-run
 
 # Extract all
-python mql5_extract.py batch urls.txt
+.venv/bin/python mql5_extract.py batch urls.txt
+```
+
+**Alternative:** Activate venv once, then use `python` directly:
+```bash
+source .venv/bin/activate  # Activate once per terminal session
+.venv/bin/python mql5_extract.py discover-and-extract
 ```
 
 ---
@@ -125,7 +170,7 @@ discovery:
 
 **Override via CLI:**
 ```bash
-python mql5_extract.py batch urls.txt --output my_results/ --verbose
+.venv/bin/python mql5_extract.py batch urls.txt --output my_results/ --verbose
 ```
 
 ---
@@ -137,40 +182,40 @@ python mql5_extract.py batch urls.txt --output my_results/ --verbose
 #### **1. Single Article**
 ```bash
 # Extract one article
-python mql5_extract.py single https://www.mql5.com/en/articles/19625
+.venv/bin/python mql5_extract.py single https://www.mql5.com/en/articles/19625
 
 # With debugging (show browser)
-python mql5_extract.py single https://... --no-headless --verbose
+.venv/bin/python mql5_extract.py single https://... --no-headless --verbose
 ```
 
 #### **2. Batch Processing**
 ```bash
 # Extract from URL file
-python mql5_extract.py batch urls.txt
+.venv/bin/python mql5_extract.py batch urls.txt
 
 # Resume interrupted extraction
-python mql5_extract.py batch urls.txt --resume
+.venv/bin/python mql5_extract.py batch urls.txt --resume
 
 # Test with limited articles
-python mql5_extract.py batch urls.txt --max-articles 5
+.venv/bin/python mql5_extract.py batch urls.txt --max-articles 5
 
 # Custom output directory
-python mql5_extract.py batch urls.txt --output /path/to/output
+.venv/bin/python mql5_extract.py batch urls.txt --output /path/to/output
 ```
 
 #### **3. Auto-Discovery + Extraction**
 ```bash
 # Discover and extract all articles for user
-python mql5_extract.py discover-and-extract
+.venv/bin/python mql5_extract.py discover-and-extract
 
 # For different user
-python mql5_extract.py discover-and-extract --user-id USER_ID
+.venv/bin/python mql5_extract.py discover-and-extract --user-id USER_ID
 
 # Save discovered URLs without extracting
-python mql5_extract.py discover-and-extract --save-urls urls.txt --dry-run
+.venv/bin/python mql5_extract.py discover-and-extract --save-urls urls.txt --dry-run
 
 # Limited extraction (testing)
-python mql5_extract.py discover-and-extract --max-articles 10
+.venv/bin/python mql5_extract.py discover-and-extract --max-articles 10
 ```
 
 ### **Common Options**
@@ -196,10 +241,10 @@ python mql5_extract.py discover-and-extract --max-articles 10
 ### **2. Checkpoint System**
 ```bash
 # Start extraction
-python mql5_extract.py batch urls.txt
+.venv/bin/python mql5_extract.py batch urls.txt
 
 # If interrupted, resume automatically
-python mql5_extract.py batch urls.txt --resume
+.venv/bin/python mql5_extract.py batch urls.txt --resume
 
 # Checkpoint file: .extraction_checkpoint.json
 ```
@@ -217,8 +262,8 @@ python mql5_extract.py batch urls.txt --resume
 # Structured with timestamps and article IDs
 
 # Adjust verbosity
-python mql5_extract.py batch urls.txt --verbose    # DEBUG
-python mql5_extract.py batch urls.txt --quiet      # ERROR only
+.venv/bin/python mql5_extract.py batch urls.txt --verbose    # DEBUG
+.venv/bin/python mql5_extract.py batch urls.txt --quiet      # ERROR only
 ```
 
 ### **5. Statistics Generation**
@@ -246,9 +291,8 @@ After batch processing, `extraction_summary.json` contains:
 ```
 
 ### **6. Rate Limiting**
-- 2-second delay between articles (configurable)
-- Respectful to mql5.com servers
-- Prevents rate limiting/blocking
+- 2-second delay between articles (configurable in `config.yaml`)
+- Sequential extraction only - see Critical Constraints
 
 ---
 
@@ -257,7 +301,7 @@ After batch processing, `extraction_summary.json` contains:
 ### **Workflow 1: Extract All Articles**
 ```bash
 # One command to rule them all
-python mql5_extract.py discover-and-extract
+.venv/bin/python mql5_extract.py discover-and-extract
 ```
 
 This will:
@@ -270,12 +314,12 @@ This will:
 ### **Workflow 2: Custom User Extraction**
 ```bash
 # Discover URLs for custom user
-python mql5_extract.py discover-and-extract \
+.venv/bin/python mql5_extract.py discover-and-extract \
   --user-id jslopes \
   --save-urls jslopes_urls.txt
 
 # Extract with custom config
-python mql5_extract.py batch jslopes_urls.txt \
+.venv/bin/python mql5_extract.py batch jslopes_urls.txt \
   --config production.yaml \
   --output jslopes_articles/
 ```
@@ -283,25 +327,25 @@ python mql5_extract.py batch jslopes_urls.txt \
 ### **Workflow 3: Resume Failed Run**
 ```bash
 # Start extraction (fails at article 50)
-python mql5_extract.py batch urls.txt
+.venv/bin/python mql5_extract.py batch urls.txt
 
 # Check logs
 tail -f extraction.log
 
 # Resume from checkpoint
-python mql5_extract.py batch urls.txt --resume
+.venv/bin/python mql5_extract.py batch urls.txt --resume
 ```
 
 ### **Workflow 4: Testing & Debugging**
 ```bash
 # Test with 5 articles
-python mql5_extract.py discover-and-extract \
+.venv/bin/python mql5_extract.py discover-and-extract \
   --max-articles 5 \
   --no-headless \
   --verbose
 
 # Dry run to preview
-python mql5_extract.py batch urls.txt --dry-run
+.venv/bin/python mql5_extract.py batch urls.txt --dry-run
 ```
 
 ---
@@ -382,7 +426,7 @@ cat simple_extraction_results/29210372/article_19625/metadata.json
 If still encountering issues:
 ```bash
 # Test with visible browser (for debugging only)
-python mql5_extract.py single URL --no-headless
+.venv/bin/python mql5_extract.py single URL --no-headless
 ```
 
 ### **Issue: Extraction fails with timeout**
@@ -392,13 +436,13 @@ extraction:
   timeout_ms: 60000  # 60 seconds
 
 # Or use verbose logging to debug
-python mql5_extract.py single URL --verbose
+.venv/bin/python mql5_extract.py single URL --verbose
 ```
 
 ### **Issue: Browser crashes**
 ```bash
 # Run with UI to see what's happening
-python mql5_extract.py single URL --no-headless
+.venv/bin/python mql5_extract.py single URL --no-headless
 
 # Check system resources
 # Playwright requires ~500MB RAM per browser instance
@@ -418,8 +462,11 @@ cat .extraction_checkpoint.json
 
 # Clear and restart
 rm .extraction_checkpoint.json
-python mql5_extract.py batch urls.txt
+.venv/bin/python mql5_extract.py batch urls.txt
 ```
+
+### **Issue: Bot Detection (HTTP 403/404, "Author not found")**
+Stop all extractions, wait 24-48h, extract sequentially with increased delays in `config.yaml`.
 
 ---
 
@@ -433,7 +480,7 @@ uvx --with beautifulsoup4 --with html2text python extract_all_77_articles.py
 
 ### **New Way**
 ```bash
-python mql5_extract.py discover-and-extract
+.venv/bin/python mql5_extract.py discover-and-extract
 ```
 
 **Backward Compatibility:**
@@ -460,18 +507,18 @@ python mql5_extract.py discover-and-extract
 ### **Quick Reference**
 ```bash
 # Extract everything
-python mql5_extract.py discover-and-extract
+.venv/bin/python mql5_extract.py discover-and-extract
 
 # Single article
-python mql5_extract.py single URL
+.venv/bin/python mql5_extract.py single URL
 
 # Batch processing
-python mql5_extract.py batch urls.txt
+.venv/bin/python mql5_extract.py batch urls.txt
 
 # Resume interrupted
-python mql5_extract.py batch urls.txt --resume
+.venv/bin/python mql5_extract.py batch urls.txt --resume
 
 # Help
-python mql5_extract.py --help
-python mql5_extract.py COMMAND --help
+.venv/bin/python mql5_extract.py --help
+.venv/bin/python mql5_extract.py COMMAND --help
 ```
