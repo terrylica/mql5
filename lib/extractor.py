@@ -466,30 +466,21 @@ class MQL5Extractor:
         return description[:30].strip('_') or "image"
 
     def _detect_language(self, code_text: str) -> str:
-        """Detect programming language of code block."""
-        mql5_indicators = [
-            r'\b(OnTick|OnInit|OnStart|OnCalculate|OnDeinit)\b',
-            r'\b(input\s+|extern\s+)',
-            r'\b(CArrayObj|CTrade|CPositionInfo|CSymbolInfo)\b',
-            r'\b(OrderSend|OrderSelect|PositionSelect)\b',
-            r'\b(PERIOD_|SYMBOL_|ORDER_|DEAL_|POSITION_)',
-            r'\b(Ask|Bid|Point|Digits)\b',
-            r'#property\s+',
-            r'//\+------------------------------------------------------------------+',
-        ]
+        """Detect programming language of code block.
 
-        for pattern in mql5_indicators:
-            if re.search(pattern, code_text, re.IGNORECASE):
-                return 'mql5'
-
-        if re.search(r'\b(void|int|double|string)\s+\w+\s*\(', code_text):
-            return 'cpp'
-        elif re.search(r'\bdef\s+\w+\s*\(', code_text):
+        For mql5.com articles, code blocks in <pre class="code"> tags are always MQL5.
+        MQL5 syntax is nearly identical to C++, so pattern matching is unreliable.
+        We only check for non-MQL5 languages, then default to 'mql5'.
+        """
+        # Check for non-MQL5 languages first
+        if re.search(r'\bdef\s+\w+\s*\(', code_text):
             return 'python'
         elif re.search(r'\bfunction\s+\w+\s*\(', code_text):
             return 'javascript'
 
-        return 'unknown'
+        # Default to MQL5 for mql5.com articles
+        # All code in <pre class="code"> on mql5.com is MQL5
+        return 'mql5'
 
     def _extract_id_from_url(self, url: str) -> str:
         """Extract article ID from URL."""
