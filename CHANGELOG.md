@@ -15,3 +15,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Version 1.0.0 → 2.0.0
 
+## v3.0.0 (2025-10-01)
+
+### BREAKING CHANGE
+
+- None
+- Initial release v1.0.0
+
+### Feat
+
+- implement production-ready MQL5 article extraction system
+
+### Fix
+
+- **extractor**: improve MQL5 syntax detection accuracy
