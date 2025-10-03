@@ -76,6 +76,24 @@ class URLDiscovery:
                 )
                 page = await context.new_page()
 
+                # Login first to avoid popups
+                if self.config.authentication.enabled:
+                    try:
+                        logger.debug("Logging in to MQL5...")
+                        await page.goto("https://www.mql5.com/en/auth_login", timeout=self.config.extraction.timeout_ms)
+                        await page.wait_for_timeout(2000)
+
+                        # Fill login form
+                        await page.fill('input[name="login"]', self.config.authentication.username)
+                        await page.fill('input[name="password"]', self.config.authentication.password)
+
+                        # Click login button
+                        await page.click('button[type="submit"]')
+                        await page.wait_for_timeout(3000)
+                        logger.debug("✅ Logged in successfully")
+                    except Exception as e:
+                        logger.warning(f"Login failed (continuing anyway): {e}")
+
                 # Navigate to publications page
                 logger.debug(f"Navigating to {url}")
                 await page.goto(url, timeout=self.config.extraction.timeout_ms)
@@ -88,12 +106,22 @@ class URLDiscovery:
 
                 try:
                     while click_count < max_clicks:
-                        more_link = await page.query_selector('a:has-text("more")')
+                        # Close popups before each click attempt
+                        try:
+                            popup_shadow = await page.query_selector('div.popup-window__shadow')
+                            if popup_shadow:
+                                await popup_shadow.click()
+                                await page.wait_for_timeout(500)
+                        except:
+                            pass
+
+                        # Match JavaScript-based "more" links for articles (e.g., "55 more... ↓")
+                        more_link = await page.query_selector('a[onclick*="LoadPublications"][onclick*="articles"]')
 
                         if more_link and await more_link.is_visible():
                             click_count += 1
                             logger.debug(f"Click #{click_count}: Found 'more' link, clicking...")
-                            await more_link.click()
+                            await more_link.click(force=True)
 
                             # Random delay (3-7 seconds) to appear human-like
                             delay = random.randint(3000, 7000)

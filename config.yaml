@@ -63,3 +63,9 @@ discovery:
   # Default MQL5 user ID for article discovery
   # User 29210372 = Allan Munene Mutiiria (77 articles)
   default_user_id: "29210372"
+
+authentication:
+  # MQL5.com login credentials (required to avoid popups and access all articles)
+  username: "balabinba"
+  password: "WzNME7c9eh8XidJ"
+  enabled: true

@@ -59,6 +59,14 @@ class DiscoveryConfig:
 
 
 @dataclass
+class AuthenticationConfig:
+    """MQL5 authentication configuration."""
+    username: str = ""
+    password: str = ""
+    enabled: bool = False
+
+
+@dataclass
 class Config:
     """Main configuration container."""
     extraction: ExtractionConfig = field(default_factory=ExtractionConfig)
@@ -67,6 +75,7 @@ class Config:
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     validation: ValidationConfig = field(default_factory=ValidationConfig)
     discovery: DiscoveryConfig = field(default_factory=DiscoveryConfig)
+    authentication: AuthenticationConfig = field(default_factory=AuthenticationConfig)
 
 
 class ConfigManager:
