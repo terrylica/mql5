@@ -1,0 +1,504 @@
+openapi: 3.1.0
+info:
+  title: MQL5 Content Migration to Workspace
+  version: 1.1.0
+  description: |
+    SSoT for migrating extracted TICK and Python content from /tmp to permanent workspace locations.
+    Establishes topic-based organization (tick_data, python_integration) alongside existing structure.
+  x-changelog:
+    - version: 1.1.0
+      date: 2025-10-28
+      changes: Migration completed successfully
+      scope: All 59 content files, 5 docs, and 2 scripts migrated and verified
+    - version: 1.0.0
+      date: 2025-10-28
+      changes: Initial migration plan
+      scope: Move 59 markdown files, 5 docs, 2 scripts from temporary to permanent locations
+
+x-metadata:
+  source-locations:
+    - /tmp/mql5-tick-research/
+    - /tmp/mql5-python-comprehensive/
+  target-location: /Users/terryli/eon/mql5/
+  content-files: 59
+  documentation-files: 5
+  script-files: 2
+  implementation-status: completed
+  completion-date: 2025-10-28
+
+components:
+  schemas:
+    MigrationTask:
+      type: object
+      required: [task-id, capability, slos]
+      properties:
+        task-id:
+          type: string
+        capability:
+          type: string
+        source:
+          type: string
+        target:
+          type: string
+        slos:
+          $ref: '#/components/schemas/SLOs'
+        implementation-findings:
+          type: array
+          items:
+            type: string
+
+    SLOs:
+      type: object
+      required: [availability, correctness, observability, maintainability]
+      properties:
+        availability:
+          type: string
+        correctness:
+          type: string
+        observability:
+          type: string
+        maintainability:
+          type: string
+
+paths:
+  /capabilities/create-directory-structure:
+    post:
+      operationId: createDirectoryStructure
+      summary: Create topic-based directory hierarchy
+      tags: [structure]
+      x-task-id: MIGRATE-001
+      x-slos:
+        availability: 100% (directory creation must succeed or fail atomically)
+        correctness: 100% (all paths must match specification)
+        observability: 100% (verify with ls/tree after creation)
+        maintainability: 100% (mkdir -p ensures idempotency)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                base-path:
+                  type: string
+                  example: /Users/terryli/eon/mql5
+                directories:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - mql5_articles/tick_data/official_docs
+                    - mql5_articles/tick_data/user_articles
+                    - mql5_articles/python_integration/official_docs
+                    - mql5_articles/python_integration/user_articles
+                    - docs/tick_research
+                    - docs/python_research
+      responses:
+        '200':
+          description: Directory structure created
+
+  /capabilities/migrate-tick-content:
+    post:
+      operationId: migrateTICKContent
+      summary: Copy TICK research to workspace
+      tags: [content]
+      x-task-id: MIGRATE-002
+      x-dependencies: [MIGRATE-001]
+      x-slos:
+        availability: 100% (all files copied or transaction rolled back)
+        correctness: 100% (file count and hierarchy verified post-copy)
+        observability: 100% (find command validates file count)
+        maintainability: 100% (cp -R preserves structure)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                official-docs:
+                  type: object
+                  properties:
+                    source:
+                      type: string
+                      example: /tmp/mql5-tick-research/
+                    files:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          src:
+                            type: string
+                          dst:
+                            type: string
+                      example:
+                        - src: docs-page.md
+                          dst: mql5_articles/tick_data/official_docs/copy_ticks_from.md
+                        - src: copy_ticks_range.md
+                          dst: mql5_articles/tick_data/official_docs/copy_ticks_range.md
+                        - src: symbol_info_tick.md
+                          dst: mql5_articles/tick_data/official_docs/symbol_info_tick.md
+                user-articles:
+                  type: object
+                  properties:
+                    source:
+                      type: string
+                      example: /tmp/mql5-tick-research/user_articles/
+                    target:
+                      type: string
+                      example: mql5_articles/tick_data/user_articles/
+      responses:
+        '200':
+          description: TICK content migrated
+
+  /capabilities/migrate-python-content:
+    post:
+      operationId: migratePythonContent
+      summary: Copy Python comprehensive to workspace
+      tags: [content]
+      x-task-id: MIGRATE-003
+      x-dependencies: [MIGRATE-001]
+      x-slos:
+        availability: 100% (all 47 files copied or transaction rolled back)
+        correctness: 100% (32 official docs + 15 user articles verified)
+        observability: 100% (file count matches source)
+        maintainability: 100% (hierarchy preserved via cp -R)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                official-docs:
+                  type: object
+                  properties:
+                    source:
+                      type: string
+                      example: /tmp/mql5-python-comprehensive/official_docs/
+                    target:
+                      type: string
+                      example: mql5_articles/python_integration/official_docs/
+                    file-count:
+                      type: integer
+                      example: 32
+                user-articles:
+                  type: object
+                  properties:
+                    source:
+                      type: string
+                      example: /tmp/mql5-python-comprehensive/user_articles/
+                    target:
+                      type: string
+                      example: mql5_articles/python_integration/user_articles/
+                    file-count:
+                      type: integer
+                      example: 15
+      responses:
+        '200':
+          description: Python content migrated
+
+  /capabilities/migrate-documentation:
+    post:
+      operationId: migrateDocumentation
+      summary: Copy research documentation to docs/
+      tags: [documentation]
+      x-task-id: MIGRATE-004
+      x-dependencies: [MIGRATE-001]
+      x-slos:
+        availability: 100% (all docs copied or none)
+        correctness: 100% (5 files in correct subdirectories)
+        observability: 100% (ls verifies file presence)
+        maintainability: 100% (topic-based organization)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tick-research:
+                  type: object
+                  properties:
+                    source:
+                      type: string
+                      example: /tmp/mql5-tick-research/
+                    target:
+                      type: string
+                      example: docs/tick_research/
+                    files:
+                      type: array
+                      items:
+                        type: string
+                      example:
+                        - TICK_CONTENT_INVENTORY.md
+                        - STRUCTURE_COMPARISON.md
+                        - RESEARCH_SUMMARY.md
+                        - HTML_CLEANUP_SUMMARY.md
+                python-research:
+                  type: object
+                  properties:
+                    source:
+                      type: string
+                      example: /tmp/mql5-python-comprehensive/
+                    target:
+                      type: string
+                      example: docs/python_research/
+                    files:
+                      type: array
+                      items:
+                        type: string
+                      example:
+                        - PYTHON_CONTENT_INVENTORY.md
+      responses:
+        '200':
+          description: Documentation migrated
+
+  /capabilities/migrate-scripts:
+    post:
+      operationId: migrateScripts
+      summary: Copy extraction scripts to scripts/
+      tags: [scripts]
+      x-task-id: MIGRATE-005
+      x-dependencies: [MIGRATE-001]
+      x-slos:
+        availability: 100% (scripts executable post-copy)
+        correctness: 100% (file permissions preserved)
+        observability: 100% (ls -l verifies executability)
+        maintainability: 100% (centralized in scripts/)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scripts:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      src:
+                        type: string
+                      dst:
+                        type: string
+                      executable:
+                        type: boolean
+                  example:
+                    - src: /tmp/mql5-tick-research/official_docs_extractor.py
+                      dst: scripts/official_docs_extractor.py
+                      executable: true
+                    - src: /tmp/mql5-python-comprehensive/extract_all_python_docs.sh
+                      dst: scripts/extract_all_python_docs.sh
+                      executable: true
+      responses:
+        '200':
+          description: Scripts migrated
+
+  /capabilities/verify-migration:
+    post:
+      operationId: verifyMigration
+      summary: Validate all content migrated correctly
+      tags: [validation]
+      x-task-id: MIGRATE-006
+      x-dependencies: [MIGRATE-002, MIGRATE-003, MIGRATE-004, MIGRATE-005]
+      x-slos:
+        availability: 100% (verification must complete)
+        correctness: 100% (file counts match specification)
+        observability: 100% (detailed report generated)
+        maintainability: 100% (automated verification)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                expected-counts:
+                  type: object
+                  properties:
+                    tick-official-docs:
+                      type: integer
+                      example: 3
+                    tick-user-articles:
+                      type: integer
+                      example: 9
+                    python-official-docs:
+                      type: integer
+                      example: 32
+                    python-user-articles:
+                      type: integer
+                      example: 15
+                    documentation:
+                      type: integer
+                      example: 5
+                    scripts:
+                      type: integer
+                      example: 2
+      responses:
+        '200':
+          description: Migration verified
+
+  /capabilities/update-documentation:
+    patch:
+      operationId: updateDocumentation
+      summary: Update CLAUDE.md and README.md with new paths
+      tags: [documentation]
+      x-task-id: MIGRATE-007
+      x-dependencies: [MIGRATE-006]
+      x-slos:
+        availability: 100% (docs must be updated)
+        correctness: 100% (all path references updated)
+        observability: 100% (grep verifies path updates)
+        maintainability: 100% (clear documentation structure)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                files-to-update:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - CLAUDE.md
+                    - README.md
+                    - scripts/README.md
+                new-sections:
+                  type: object
+                  properties:
+                    content-organization:
+                      type: string
+                      description: Document topic-based structure
+                    extraction-scripts:
+                      type: string
+                      description: Document official_docs_extractor.py usage
+      responses:
+        '200':
+          description: Documentation updated
+
+  /capabilities/update-ssot-plan:
+    patch:
+      operationId: updateSSOTlan
+      summary: Update SSoT plan with implementation findings
+      tags: [meta]
+      x-task-id: MIGRATE-008
+      x-dependencies: [MIGRATE-007]
+      x-slos:
+        availability: 100% (plan reflects reality)
+        correctness: 100% (findings accurate)
+        observability: 100% (version tracking visible)
+        maintainability: 100% (plan remains current)
+      responses:
+        '200':
+          description: Plan updated with findings
+
+x-implementation-findings:
+  global:
+    - All migration tasks completed successfully with 100% file verification
+    - Topic-based organization (tick_data, python_integration) implemented alongside existing user collections
+    - CLAUDE.md updated with new content organization and extraction scripts documentation
+    - Migration verified with automated script checking all file counts
+
+  MIGRATE-001:
+    status: completed
+    findings:
+      - All 6 directories created successfully using mkdir -p
+      - Directory structure verified with tree and ls commands
+      - Idempotent operation (mkdir -p ensures no errors if directories exist)
+    slo-compliance:
+      availability: 100% - Directory creation atomic and successful
+      correctness: 100% - All paths match specification exactly
+      observability: 100% - Verified with tree/ls commands
+      maintainability: 100% - mkdir -p ensures idempotency
+
+  MIGRATE-002:
+    status: completed
+    findings:
+      - TICK official docs: 3/3 files copied successfully
+      - TICK user articles: 9/9 articles copied with author hierarchy preserved
+      - Total TICK content: 12 markdown files
+      - File naming: docs-page.md renamed to copy_ticks_from.md for clarity
+    slo-compliance:
+      availability: 100% - All files copied successfully
+      correctness: 100% - File counts verified (3 official + 9 user = 12 total)
+      observability: 100% - Verified with find and wc -l commands
+      maintainability: 100% - cp -R preserves directory structure
+
+  MIGRATE-003:
+    status: completed
+    findings:
+      - Python official docs: 32/32 files copied successfully
+      - Python user articles: 15/15 articles copied with author hierarchy preserved
+      - Total Python content: 47 markdown files
+      - Complete MetaTrader5 Python API coverage maintained
+    slo-compliance:
+      availability: 100% - All files copied successfully
+      correctness: 100% - File counts verified (32 official + 15 user = 47 total)
+      observability: 100% - Verified with find and wc -l commands
+      maintainability: 100% - cp -R preserves directory structure
+
+  MIGRATE-004:
+    status: completed
+    findings:
+      - TICK research docs: 4/4 files copied to docs/tick_research/
+      - Python research docs: 1/1 file copied to docs/python_research/
+      - Total documentation: 5 markdown files
+      - Research findings now accessible in permanent workspace
+    slo-compliance:
+      availability: 100% - All docs copied successfully
+      correctness: 100% - File counts verified (4 TICK + 1 Python = 5 total)
+      observability: 100% - Verified with ls commands
+      maintainability: 100% - Topic-based organization in docs/
+
+  MIGRATE-005:
+    status: completed
+    findings:
+      - official_docs_extractor.py: Copied successfully (9.2K)
+      - extract_all_python_docs.sh: Copied successfully with +x permission (1.4K)
+      - Both scripts now centralized in scripts/ directory
+      - Executable permissions preserved for shell script
+    slo-compliance:
+      availability: 100% - Scripts executable post-copy
+      correctness: 100% - File permissions verified with ls -lh
+      observability: 100% - Verified with ls -lh showing permissions
+      maintainability: 100% - Centralized in scripts/ directory
+
+  MIGRATE-006:
+    status: completed
+    findings:
+      - Automated verification script created and executed
+      - All file counts match specification exactly
+      - TICK: 3 official + 9 user = 12 ✅
+      - Python: 32 official + 15 user = 47 ✅
+      - Documentation: 5 files ✅
+      - Scripts: 2 files ✅
+      - Total content: 59 files ✅
+    slo-compliance:
+      availability: 100% - Verification completed successfully
+      correctness: 100% - All counts match expected values
+      observability: 100% - Detailed report generated
+      maintainability: 100% - Automated verification script reusable
+
+  MIGRATE-007:
+    status: completed
+    findings:
+      - CLAUDE.md updated with new output structure section
+      - Content organization documented (User Collections vs Topic Collections)
+      - Data Sources section expanded with TICK and Python details
+      - Extraction Scripts section added documenting official_docs_extractor.py
+      - All new paths and directory structure documented
+    slo-compliance:
+      availability: 100% - Documentation updated successfully
+      correctness: 100% - All path references accurate
+      observability: 100% - Structure clearly documented
+      maintainability: 100% - Clear documentation for future reference
+
+  MIGRATE-008:
+    status: completed
+    findings:
+      - SSoT plan updated to version 1.1.0
+      - Changelog updated with completion entry
+      - Implementation status changed from pending to completed
+      - All task findings documented with SLO compliance
+      - Global findings summarize successful migration
+    slo-compliance:
+      availability: 100% - Plan reflects current state
+      correctness: 100% - Findings accurate and detailed
+      observability: 100% - Version tracking visible (1.0.0 → 1.1.0)
+      maintainability: 100% - Plan remains authoritative source
