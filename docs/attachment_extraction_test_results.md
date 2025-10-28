@@ -9,6 +9,7 @@
 ## 🧪 Test Scope
 
 Validated the attachment extraction design with a single article containing diverse attachment types:
+
 - MQL5 source code (`.mq5`)
 - MQL5 header files (`.mqh`)
 - Jupyter notebooks (`.ipynb`)
@@ -19,6 +20,7 @@ Validated the attachment extraction design with a single article containing dive
 ## ✅ Test Results
 
 ### 1. **Download Functionality** ✅
+
 - **Result:** Successfully downloaded 2 archives (689.4 KB total)
 - **URLs tested:**
   - `https://www.mql5.com/en/articles/download/14760.zip` (full archive)
@@ -26,6 +28,7 @@ Validated the attachment extraction design with a single article containing dive
 - **Performance:** No timeouts, reliable HTTP downloads
 
 ### 2. **Binary File Filtering** ✅
+
 - **Result:** All binary files correctly skipped, only plain-text extracted
 - **Skipped files:**
   - `decoder.eurusd.h1.onnx` (ONNX model)
@@ -38,6 +41,7 @@ Validated the attachment extraction design with a single article containing dive
   - 1 notebook (`.ipynb`)
 
 ### 3. **File Categorization** ✅
+
 - **Result:** All files correctly categorized into subdirectories
 - **Structure:**
   ```
@@ -52,6 +56,7 @@ Validated the attachment extraction design with a single article containing dive
   ```
 
 ### 4. **Manifest Generation** ✅
+
 - **Result:** Complete JSON manifest with all metadata
 - **Contains:**
   - Article ID and extraction timestamp
@@ -60,6 +65,7 @@ Validated the attachment extraction design with a single article containing dive
   - Source URLs for archives
 
 **Sample manifest entry:**
+
 ```json
 {
   "filename": "AutoEncoder Indicator.mq5",
@@ -72,6 +78,7 @@ Validated the attachment extraction design with a single article containing dive
 ```
 
 ### 5. **README Generation** ✅
+
 - **Result:** Clean, organized README with file listings
 - **Contains:**
   - Extraction timestamp
@@ -79,22 +86,27 @@ Validated the attachment extraction design with a single article containing dive
   - Files grouped by category with sizes
 
 **Sample README section:**
+
 ```markdown
 ### Source (1 files)
+
 - `AutoEncoder Indicator.mq5` (8.1 KB)
 
 ### Headers (3 files)
+
 - `Autoencoder-onnx.mqh` (11.3 KB)
 - `MatrixExtend.mqh` (50.8 KB)
 - `preprocessing.mqh` (22.1 KB)
 ```
 
 ### 6. **Deduplication** ✅
+
 - **Result:** SHA256-based deduplication working
 - **Test case:** 0 duplicates found (archives contained unique files)
 - **Mechanism:** Tracks checksums across all categories, removes duplicates on second encounter
 
 ### 7. **Non-Disruptive to Existing Extraction** ✅
+
 - **Result:** Completely non-overlapping file structure
 - **Existing article structure:**
   ```
@@ -114,6 +126,7 @@ Validated the attachment extraction design with a single article containing dive
 - **No file conflicts:** Attachment extraction only adds new files, never modifies existing
 
 ### 8. **Safety Checks** ✅
+
 - **Result:** All safety mechanisms validated
 - **Tested:**
   - File size limits (100 MB per file) ✅
@@ -125,32 +138,35 @@ Validated the attachment extraction design with a single article containing dive
 
 ## 📊 Performance Metrics
 
-| Metric | Value |
-|--------|-------|
-| **Download time** | < 3 seconds |
-| **Extraction time** | < 1 second |
-| **Total files extracted** | 5 |
-| **Total size** | 592.3 KB |
-| **Binary files skipped** | 4 |
-| **Archives processed** | 2 |
+| Metric                    | Value       |
+| ------------------------- | ----------- |
+| **Download time**         | < 3 seconds |
+| **Extraction time**       | < 1 second  |
+| **Total files extracted** | 5           |
+| **Total size**            | 592.3 KB    |
+| **Binary files skipped**  | 4           |
+| **Archives processed**    | 2           |
 
 ---
 
 ## 🎯 Design Validation
 
 ### **Aesthetic & Organization** ✅
+
 - Clean hierarchical structure with category subdirectories
 - Self-documenting with README and manifest
 - Preserved original archives for reference
 - Consistent naming conventions
 
 ### **Self-Preserving** ✅
+
 - Original ZIP archives kept in `archives/` subdirectory
 - SHA256 checksums enable integrity verification
 - Manifest tracks source URLs for re-download if needed
 - No destructive operations on existing files
 
 ### **Elegant Layout** ✅
+
 - Intuitive file organization by type
 - README provides immediate overview
 - Manifest enables programmatic access
@@ -173,6 +189,7 @@ Validated the attachment extraction design with a single article containing dive
    - File count limits prevent resource exhaustion
 
 3. **File Filtering Logic**
+
    ```python
    SKIP_EXTENSIONS = {".ex5", ".ex4", ".bin", ".dat", ".dll", ".exe"}
 
@@ -227,6 +244,7 @@ Validated the attachment extraction design with a single article containing dive
 - **README:** `/tmp/test_attachment_extraction/article_14760/attachments_README.md`
 
 **Cleanup command:**
+
 ```bash
 rm -rf /tmp/test_attachment_extraction/
 ```

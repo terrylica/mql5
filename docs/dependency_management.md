@@ -16,6 +16,7 @@ uvx --with playwright --with beautifulsoup4 --with httpx --with pyyaml \
 ```
 
 **Issues:**
+
 1. ❌ Dependencies downloaded every time (slow, wasteful)
 2. ❌ Playwright browsers need reinstalling each run
 3. ❌ No persistent environment across sessions
@@ -39,15 +40,15 @@ Use **persistent virtual environment** with `uv venv`:
 
 ## 📊 Comparison: UVX vs UV
 
-| Feature | `uvx` (old) | `uv venv` (new) |
-|---------|-------------|-----------------|
-| **Environment** | Temporary, deleted after execution | Persistent `.venv/` directory |
-| **Setup time** | Every execution (~10-30s) | Once (~30s total) |
-| **Playwright browsers** | Must reinstall each time | Installed once, reused |
-| **Disk usage** | No local storage | ~100 MB in `.venv/` |
-| **Command length** | Long (all deps listed) | Short (just script path) |
-| **Use case** | One-off scripts, testing | Production, development |
-| **Best for** | Quick experiments | This project ✅ |
+| Feature                 | `uvx` (old)                        | `uv venv` (new)               |
+| ----------------------- | ---------------------------------- | ----------------------------- |
+| **Environment**         | Temporary, deleted after execution | Persistent `.venv/` directory |
+| **Setup time**          | Every execution (~10-30s)          | Once (~30s total)             |
+| **Playwright browsers** | Must reinstall each time           | Installed once, reused        |
+| **Disk usage**          | No local storage                   | ~100 MB in `.venv/`           |
+| **Command length**      | Long (all deps listed)             | Short (just script path)      |
+| **Use case**            | One-off scripts, testing           | Production, development       |
+| **Best for**            | Quick experiments                  | This project ✅               |
 
 ---
 
@@ -61,6 +62,7 @@ Use **persistent virtual environment** with `uv venv`:
 ```
 
 This will:
+
 1. Create `.venv/` virtual environment
 2. Install all Python dependencies
 3. Install Playwright Chromium browser
@@ -169,6 +171,7 @@ env/
 ## 🎯 Why This Matters
 
 ### **Before (uvx - temporary)**
+
 ```bash
 $ time uvx --with playwright --with httpx python script.py
 # Downloads dependencies... ~15s
@@ -178,6 +181,7 @@ $ time uvx --with playwright --with httpx python script.py
 ```
 
 ### **After (uv venv - persistent)**
+
 ```bash
 $ time .venv/bin/python script.py
 # Uses cached dependencies... 0s
@@ -274,10 +278,10 @@ Persistent virtual environment uses:
 
 ## 🎉 Summary
 
-| Before | After |
-|--------|-------|
+| Before                            | After                        |
+| --------------------------------- | ---------------------------- |
 | `uvx --with ... python script.py` | `.venv/bin/python script.py` |
-| Slow (~20s overhead) | Fast (~0s overhead) |
-| Temporary environment | Persistent environment |
-| Browsers reinstalled each time | Browsers cached |
-| Not recommended for production | ✅ Production ready |
+| Slow (~20s overhead)              | Fast (~0s overhead)          |
+| Temporary environment             | Persistent environment       |
+| Browsers reinstalled each time    | Browsers cached              |
+| Not recommended for production    | ✅ Production ready          |

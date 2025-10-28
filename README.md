@@ -63,16 +63,19 @@ mql5_articles/
 ## 🛠️ Usage Examples
 
 ### **Extract All Articles**
+
 ```bash
 .venv/bin/python mql5_extract.py discover-and-extract
 ```
 
 ### **Extract Single Article**
+
 ```bash
 .venv/bin/python mql5_extract.py single https://www.mql5.com/en/articles/19625
 ```
 
 ### **Batch Processing**
+
 ```bash
 # Create URL file
 .venv/bin/python mql5_extract.py discover-and-extract --save-urls urls.txt --dry-run
@@ -85,6 +88,7 @@ mql5_articles/
 ```
 
 ### **Custom User Extraction**
+
 ```bash
 .venv/bin/python mql5_extract.py discover-and-extract --user-id jslopes
 ```
@@ -94,6 +98,7 @@ mql5_articles/
 ## ⚙️ Configuration
 
 Edit `config.yaml` to customize:
+
 - Output directory
 - Browser timeout
 - Retry attempts
@@ -106,11 +111,13 @@ Edit `config.yaml` to customize:
 ## 🔧 Maintenance
 
 ### **Update Dependencies**
+
 ```bash
 uv pip install --python .venv/bin/python -r requirements.txt --upgrade
 ```
 
 ### **Clean Reinstall**
+
 ```bash
 rm -rf .venv && ./setup.sh
 ```
@@ -120,6 +127,7 @@ rm -rf .venv && ./setup.sh
 ## 📊 Quality Metrics
 
 Extracted content includes:
+
 - **~400,000+ words** of technical articles
 - **100% accurate MQL5 syntax detection** (fixed in v3.0.0)
 - **Local images** with automatic naming
@@ -131,12 +139,12 @@ Extracted content includes:
 
 We use **`uv venv`** (persistent) instead of **`uvx`** (temporary):
 
-| Feature | `uvx` | `uv venv` |
-|---------|-------|-----------|
-| Setup time | Every run (~15s) | Once (~30s) |
-| Playwright browsers | Reinstall each time | Cached |
-| Command length | Very long | Short |
-| Best for | One-off scripts | **This project** ✅ |
+| Feature             | `uvx`               | `uv venv`           |
+| ------------------- | ------------------- | ------------------- |
+| Setup time          | Every run (~15s)    | Once (~30s)         |
+| Playwright browsers | Reinstall each time | Cached              |
+| Command length      | Very long           | Short               |
+| Best for            | One-off scripts     | **This project** ✅ |
 
 **Result:** 4x faster execution after initial setup
 
@@ -156,11 +164,13 @@ See [docs/dependency_management.md](docs/dependency_management.md) for details.
 ## 🆘 Troubleshooting
 
 ### **Issue: `uv: command not found`**
+
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ### **Issue: Extraction fails with timeout**
+
 ```bash
 # Increase timeout in config.yaml
 extraction:
@@ -168,6 +178,7 @@ extraction:
 ```
 
 ### **Issue: Browser not found**
+
 ```bash
 .venv/bin/python -m playwright install chromium
 ```

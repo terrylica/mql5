@@ -10,12 +10,14 @@
 ### **Before (Temporary UVX)**
 
 Every execution required:
+
 ```bash
 uvx --with playwright --with beautifulsoup4 --with httpx --with pyyaml \
     python mql5_extract.py discover-and-extract
 ```
 
 **Problems:**
+
 - ❌ Dependencies downloaded every time (~15s overhead)
 - ❌ Playwright browsers reinstalled each run
 - ❌ No persistent environment
@@ -25,16 +27,19 @@ uvx --with playwright --with beautifulsoup4 --with httpx --with pyyaml \
 ### **After (Persistent UV Venv)**
 
 One-time setup:
+
 ```bash
 ./setup.sh
 ```
 
 Then use forever:
+
 ```bash
 .venv/bin/python mql5_extract.py discover-and-extract
 ```
 
 **Benefits:**
+
 - ✅ Dependencies cached permanently
 - ✅ Playwright browsers installed once
 - ✅ Fast execution (4x faster)
@@ -48,6 +53,7 @@ Then use forever:
 ### **1. Setup Script (`setup.sh`)**
 
 Automated installation script:
+
 - Creates `.venv/` virtual environment
 - Installs all dependencies from `requirements.txt`
 - Installs Playwright Chromium browser
@@ -58,6 +64,7 @@ Automated installation script:
 ### **2. Persistent Virtual Environment (`.venv/`)**
 
 Directory structure:
+
 ```
 .venv/
 ├── bin/
@@ -81,6 +88,7 @@ Directory structure:
 ### **4. Updated CLAUDE.md**
 
 All command examples updated:
+
 - ❌ `python mql5_extract.py`
 - ✅ `.venv/bin/python mql5_extract.py`
 
@@ -105,11 +113,13 @@ cd mql5
 ### **Daily Usage**
 
 **Option 1: Direct execution (recommended)**
+
 ```bash
 .venv/bin/python mql5_extract.py discover-and-extract
 ```
 
 **Option 2: Activate environment**
+
 ```bash
 source .venv/bin/activate
 python mql5_extract.py discover-and-extract
@@ -122,19 +132,19 @@ deactivate  # when done
 
 ### **Execution Time**
 
-| Command | UVX (old) | UV Venv (new) |
-|---------|-----------|---------------|
-| **First run** | ~20s (download deps) | ~5s (use cached) |
-| **Subsequent runs** | ~20s (download again) | ~5s (use cached) |
-| **Playwright browser** | Reinstall each time | Cached |
+| Command                | UVX (old)             | UV Venv (new)    |
+| ---------------------- | --------------------- | ---------------- |
+| **First run**          | ~20s (download deps)  | ~5s (use cached) |
+| **Subsequent runs**    | ~20s (download again) | ~5s (use cached) |
+| **Playwright browser** | Reinstall each time   | Cached           |
 
 **Result:** 4x faster after initial setup
 
 ### **Disk Usage**
 
-| Method | Storage |
-|--------|---------|
-| **UVX** | 0 MB (temporary) |
+| Method      | Storage              |
+| ----------- | -------------------- |
+| **UVX**     | 0 MB (temporary)     |
 | **UV Venv** | ~230 MB (persistent) |
 
 **Trade-off:** Use 230 MB disk for 4x speed improvement ✅
@@ -146,6 +156,7 @@ deactivate  # when done
 ### **Update Dependencies**
 
 When `requirements.txt` changes:
+
 ```bash
 uv pip install --python .venv/bin/python -r requirements.txt --upgrade
 ```
@@ -153,6 +164,7 @@ uv pip install --python .venv/bin/python -r requirements.txt --upgrade
 ### **Reinstall Browser**
 
 If Playwright browser corrupted:
+
 ```bash
 .venv/bin/python -m playwright install chromium
 ```
@@ -160,6 +172,7 @@ If Playwright browser corrupted:
 ### **Clean Reinstall**
 
 Start fresh:
+
 ```bash
 rm -rf .venv
 ./setup.sh
@@ -186,6 +199,7 @@ After migration, verify:
 ### **UVX - Temporary Execution**
 
 Think of `uvx` like:
+
 - **"Run this script with these dependencies once"**
 - Creates temporary environment
 - Deletes environment after execution
@@ -194,6 +208,7 @@ Think of `uvx` like:
 ### **UV Venv - Persistent Environment**
 
 Think of `uv venv` like:
+
 - **"Create a permanent workspace for this project"**
 - Creates persistent directory (`.venv/`)
 - Reused across all executions
@@ -214,6 +229,7 @@ Think of `uv venv` like:
 ### **Why `uv` Over `pip`?**
 
 `uv` is faster and more reliable:
+
 - **10-100x faster** than pip for dependency resolution
 - **Better caching** (reuses downloads)
 - **Reliable virtual environments** (no externally-managed errors)
@@ -222,6 +238,7 @@ Think of `uv venv` like:
 ### **Why `--python .venv/bin/python`?**
 
 Without this flag, `uv pip` tries to install to system Python:
+
 ```bash
 # ❌ Fails with "externally-managed" error
 uv pip install -r requirements.txt
@@ -233,6 +250,7 @@ uv pip install --python .venv/bin/python -r requirements.txt
 ### **Why Playwright Browsers Separate?**
 
 Playwright browsers (~150 MB) are not Python packages:
+
 - Installed via Playwright's CLI
 - Stored in system cache (~/.cache/ms-playwright/)
 - Shared across Python environments
@@ -243,12 +261,14 @@ Playwright browsers (~150 MB) are not Python packages:
 ## 🎉 Summary
 
 **Before:**
+
 ```bash
 # Every time (slow)
 uvx --with playwright --with httpx --with pyyaml python mql5_extract.py discover-and-extract
 ```
 
 **After:**
+
 ```bash
 # Once (setup)
 ./setup.sh
@@ -258,6 +278,7 @@ uvx --with playwright --with httpx --with pyyaml python mql5_extract.py discover
 ```
 
 **Result:**
+
 - ✅ 4x faster execution
 - ✅ Production-ready
 - ✅ Clean commands

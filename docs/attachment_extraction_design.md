@@ -24,6 +24,7 @@ MQL5 articles include downloadable code files (MQL5 source, compiled binaries, n
 ### **Pattern Analysis (5 Sample Articles)**
 
 #### **Article 14760 (Autoencoder - Omega J Msigwa)**
+
 - **ZIP Archive:** `/en/articles/download/14760.zip` (full archive)
 - **Nested ZIP:** `/en/articles/download/14760/code_6_files.zip` (689.5 KB)
 - **File Types:** `.mqh`, `.mq5`, `.ipynb`
@@ -35,6 +36,7 @@ MQL5 articles include downloadable code files (MQL5 source, compiled binaries, n
   - `autoencoders.ipynb` - Python Jupyter notebook
 
 #### **Article 15017 (Break of Structure - Allan Munene)**
+
 - **ZIP Archive:** `/en/articles/download/15017.zip`
 - **Individual Files:**
   - `Break_of_Structure_jBoSc_EA.mq5` (15.11 KB) - source
@@ -42,6 +44,7 @@ MQL5 articles include downloadable code files (MQL5 source, compiled binaries, n
 - **File Types:** `.mq5` (source), `.ex5` (compiled)
 
 #### **Article 16630 (Ensemble Methods - Francis Dube)**
+
 - **File Types:** `.mqh`, `.mq5`
 - **Files:**
   - `ensemble.mqh` (50.08 KB)
@@ -52,6 +55,7 @@ MQL5 articles include downloadable code files (MQL5 source, compiled binaries, n
   - `Ensemble_Demo.mq5` (13.03 KB)
 
 #### **Article 17737 (Market Regime Detection - Sahil Bagdi)**
+
 - **ZIP Archive:** `/en/articles/download/17737.zip`
 - **Files:**
   - `MarketRegimeEnum.mqh` (0.79 KB)
@@ -60,6 +64,7 @@ MQL5 articles include downloadable code files (MQL5 source, compiled binaries, n
   - `MarketRegimeIndicator.mq5` (5.15 KB)
 
 #### **Article 11125 (Replay System - Daniel Jose)**
+
 - **ZIP Archive:** `/en/articles/download/11125.zip`
 - **Large ZIP:** `Market_Replay_4vv_19.zip` (12,901.8 KB / 12.6 MB!)
 - **File Types:** Unknown (inside large ZIP)
@@ -75,16 +80,16 @@ https://www.mql5.com/en/articles/download/{article_id}/{nested}.zip # Nested ZIP
 
 ### **File Type Categories**
 
-| Category | Extensions | Description | Download |
-|----------|-----------|-------------|----------|
-| **MQL5 Source** | `.mq5`, `.mq4` | Expert Advisors, Indicators, Scripts | ✅ YES |
-| **MQL5 Headers** | `.mqh` | Libraries, Include files | ✅ YES |
-| **Notebooks** | `.ipynb` | Jupyter notebooks (Python code) | ✅ YES |
-| **Data** | `.csv`, `.json`, `.txt` | Training data, configs | ✅ YES |
-| **Docs** | `.pdf`, `.md` | Documentation | ✅ YES |
-| **Archives** | `.zip`, `.rar` | Nested packages (extract only) | ✅ Extract |
-| **Compiled** | `.ex5`, `.ex4` | Binary executables | ❌ **SKIP** |
-| **Binary Data** | `.bin`, `.dat` | Binary data files | ❌ **SKIP** |
+| Category         | Extensions              | Description                          | Download    |
+| ---------------- | ----------------------- | ------------------------------------ | ----------- |
+| **MQL5 Source**  | `.mq5`, `.mq4`          | Expert Advisors, Indicators, Scripts | ✅ YES      |
+| **MQL5 Headers** | `.mqh`                  | Libraries, Include files             | ✅ YES      |
+| **Notebooks**    | `.ipynb`                | Jupyter notebooks (Python code)      | ✅ YES      |
+| **Data**         | `.csv`, `.json`, `.txt` | Training data, configs               | ✅ YES      |
+| **Docs**         | `.pdf`, `.md`           | Documentation                        | ✅ YES      |
+| **Archives**     | `.zip`, `.rar`          | Nested packages (extract only)       | ✅ Extract  |
+| **Compiled**     | `.ex5`, `.ex4`          | Binary executables                   | ❌ **SKIP** |
+| **Binary Data**  | `.bin`, `.dat`          | Binary data files                    | ❌ **SKIP** |
 
 ---
 
@@ -195,17 +200,21 @@ Note: Binary executables (.ex5, .ex4) are SKIPPED - not downloaded or stored
 ## 📂 File Structure
 
 ### Source Code (`.mq5`, `.mqh`)
+
 - [`MatrixExtend.mqh`](attachments/source/MatrixExtend.mqh) - Matrix manipulation library (12.3 KB)
 - [`preprocessing.mqh`](attachments/source/preprocessing.mqh) - Data preprocessing (8.7 KB)
 - [`AutoEncoder Indicator.mq5`](attachments/source/AutoEncoder%20Indicator.mq5) - Main indicator (15.2 KB)
 
 ### Notebooks (`.ipynb`)
+
 - [`autoencoders.ipynb`](attachments/notebooks/autoencoders.ipynb) - Python code for autoencoder training (45.6 KB)
 
 ### Headers (`.mqh`)
+
 - [`Autoencoder-onnx.mqh`](attachments/source/Autoencoder-onnx.mqh) - ONNX model loader (6.5 KB)
 
 ### Archives (Original)
+
 - [`14760_full_archive.zip`](attachments/archives/14760_full_archive.zip) - Complete package (689.5 KB)
 
 ---
@@ -684,8 +693,8 @@ class MQL5Extractor:
 
 ```yaml
 attachments:
-  enabled: true                    # Master switch
-  download_strategy: "archive_first"  # "archive_first" | "individual" | "both"
+  enabled: true # Master switch
+  download_strategy: "archive_first" # "archive_first" | "individual" | "both"
 
   extraction:
     extract_zips: true
@@ -694,20 +703,20 @@ attachments:
     max_archive_size_mb: 500
 
   categories:
-    download_source: true          # .mq5, .mq4 (MQL5 source)
-    download_headers: true         # .mqh (header files)
-    download_notebooks: true       # .ipynb (Jupyter notebooks)
-    download_data: true            # .csv, .json, .txt (data files)
-    download_docs: true            # .pdf, .md (documentation)
+    download_source: true # .mq5, .mq4 (MQL5 source)
+    download_headers: true # .mqh (header files)
+    download_notebooks: true # .ipynb (Jupyter notebooks)
+    download_data: true # .csv, .json, .txt (data files)
+    download_docs: true # .pdf, .md (documentation)
 
-  skip_binary_executables: true   # ALWAYS skip .ex5, .ex4 (not configurable)
+  skip_binary_executables: true # ALWAYS skip .ex5, .ex4 (not configurable)
 
   deduplication:
     enabled: true
-    method: "checksum"             # "checksum" | "filename"
+    method: "checksum" # "checksum" | "filename"
 
   safety:
-    scan_for_malware: false        # Requires ClamAV
+    scan_for_malware: false # Requires ClamAV
     block_executables: true
 
   retry:
@@ -720,24 +729,28 @@ attachments:
 ## 🚀 Rollout Plan
 
 ### **Phase 1: Proof of Concept (1 article)**
+
 - Implement attachment detection
 - Download single article attachments
 - Generate manifest and README
 - **Test with:** Article 14760 (Autoencoder - has multiple file types)
 
 ### **Phase 2: Batch Testing (5-10 articles)**
+
 - Test across different authors
 - Validate ZIP extraction
 - Test deduplication logic
 - **Test with:** Articles 14760, 15017, 16630, 17737, 11125
 
 ### **Phase 3: Full Integration**
+
 - Add to batch extraction pipeline
 - Add progress tracking
 - Add checkpoint support
 - Generate summary statistics
 
 ### **Phase 4: Optimization**
+
 - Parallel downloads (asyncio)
 - Caching (skip already downloaded)
 - Incremental updates
