@@ -13,6 +13,7 @@ These scripts are deprecated and kept for reference only.
 ## Migration
 
 All functionality has been migrated to:
+
 - `lib/extractor.py` - Production extractor with retry logic
 - `lib/discovery.py` - Article discovery
 - `lib/batch_processor.py` - Batch orchestration

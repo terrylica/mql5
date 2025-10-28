@@ -122,21 +122,54 @@ source .venv/bin/activate  # Activate once per terminal session
 
 ```
 mql5_articles/
-├── 29210372/                 # User folder (numeric ID)
+├── 29210372/                 # User folder (numeric ID) - 77 articles
 │   ├── article_19625/
 │   │   ├── article_19625.md # Clean markdown with MQL5 syntax
 │   │   ├── metadata.json    # Extraction metadata
 │   │   ├── images_manifest.json
 │   │   └── images/          # Local images
 │   └── article_19624/
-├── jslopes/                  # User folder (username)
-│   └── article_19626/
-├── gamuchiraindawa/          # User folder (username)
-│   └── article_19383/
+│
+├── tick_data/                # TICK research collection
+│   ├── official_docs/        # 3 Python MT5 TICK functions
+│   │   ├── copy_ticks_from.md
+│   │   ├── copy_ticks_range.md
+│   │   └── symbol_info_tick.md
+│   └── user_articles/        # 9 user articles by author
+│       ├── artmedia70/
+│       ├── lazymesh/
+│       ├── lynnchris/
+│       ├── metaquotes/
+│       ├── tapochun/
+│       └── zdd/
+│
+├── python_integration/       # Complete Python MT5 API
+│   ├── official_docs/        # 32 MT5 Python API functions
+│   │   ├── mt5initialize_py.md
+│   │   ├── mt5login_py.md
+│   │   ├── mt5copyticksfrom_py.md
+│   │   └── ... (29 more)
+│   └── user_articles/        # 15 implementation articles
+│       ├── dmitrievsky/
+│       ├── jsgaston/
+│       ├── koshtenko/
+│       ├── lazymesh/
+│       ├── lynnchris/
+│       ├── m.aboud/
+│       ├── omegajoctan/
+│       ├── patricknjoroge743/
+│       └── tomcat66/
+│
 ├── extraction_summary.json   # Batch statistics
-└── logs/
-    └── extraction.log       # Detailed logs
+└── extraction.log           # Detailed logs
 ```
+
+**Content Organization:**
+
+- **User Collections** (e.g., `29210372/`): Articles by specific authors
+- **Topic Collections** (e.g., `tick_data/`, `python_integration/`): Organized by research area
+  - `official_docs/`: Official MQL5 documentation pages
+  - `user_articles/`: Community-contributed articles by author
 
 **User Folder Naming**: MQL5 uses dual identifiers - some profiles use numeric IDs (`29210372`), others use usernames (`jslopes`, `gamuchiraindawa`). Both are stable, unique identifiers extracted from the article's author meta tag. This is expected MQL5 behavior, not a bug.
 
@@ -438,13 +471,42 @@ cat simple_extraction_results/29210372/article_19625/metadata.json
 
 ---
 
-## 📚 Data Source
+## 📚 Data Sources
+
+### **User Collections**
 
 - **Primary Source**: https://www.mql5.com/en/users/29210372/publications
 - **Author**: Allan Munene Mutiiria (77 technical articles)
 - **Content Type**: MQL5 trading strategy implementations
 - **Total Volume**: ~400,000+ words of technical content
 - **Date Range**: Articles from 2021-2025
+
+### **Topic Collections**
+
+#### **TICK Data Research** (`mql5_articles/tick_data/`)
+
+- **Official Docs**: 3 Python MetaTrader5 TICK functions
+  - `copy_ticks_from`, `copy_ticks_range`, `symbol_info_tick`
+- **User Articles**: 9 articles covering TICK data handling, storage, and analysis
+- **Research Documentation**: `/docs/tick_research/` (4 files)
+
+#### **Python Integration** (`mql5_articles/python_integration/`)
+
+- **Official Docs**: 32 complete Python MetaTrader5 API functions
+  - Connection, account info, symbol management, historical data, orders, positions
+- **User Articles**: 15 implementation guides
+  - ML/AI integration, trading automation, data analysis, socket communication
+- **Research Documentation**: `/docs/python_research/` (1 file)
+
+### **Extraction Scripts**
+
+Located in `/scripts/`:
+
+- **`official_docs_extractor.py`**: Extracts official MQL5 documentation pages
+  - Handles different HTML structure (div.docsContainer)
+  - Processes inline tables and code examples
+  - Auto-deletes HTML after conversion
+- **`extract_all_python_docs.sh`**: Batch extraction for all Python API functions
 
 ---
 
