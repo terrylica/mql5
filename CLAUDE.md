@@ -112,7 +112,7 @@ source .venv/bin/activate  # Activate once per terminal session
 └── simple_extraction_results/ # Output directory
     └── {user_id}/          # Hierarchical structure
         └── article_{id}/
-            ├── article.md
+            ├── article_{id}.md
             ├── metadata.json
             ├── images_manifest.json
             └── images/
@@ -124,7 +124,7 @@ source .venv/bin/activate  # Activate once per terminal session
 mql5_articles/
 ├── 29210372/                 # User folder (numeric ID)
 │   ├── article_19625/
-│   │   ├── article.md       # Clean markdown with MQL5 syntax
+│   │   ├── article_19625.md # Clean markdown with MQL5 syntax
 │   │   ├── metadata.json    # Extraction metadata
 │   │   ├── images_manifest.json
 │   │   └── images/          # Local images
@@ -384,7 +384,7 @@ tail -f logs/extraction.log
 
 ````bash
 # Count extracted articles
-find simple_extraction_results/ -name "article.md" | wc -l
+find simple_extraction_results/ -name "article_*.md" | wc -l
 
 # Check MQL5 syntax highlighting
 grep -r "```mql5" simple_extraction_results/ | wc -l
@@ -400,7 +400,7 @@ cat simple_extraction_results/extraction_summary.json
 
 ```bash
 # Check word count
-wc -w simple_extraction_results/29210372/article_19625/article.md
+wc -w simple_extraction_results/29210372/article_19625/article_19625.md
 
 # Check images
 ls simple_extraction_results/29210372/article_19625/images/
@@ -425,8 +425,8 @@ cat simple_extraction_results/29210372/article_19625/metadata.json
 
 - **Top Level**: User folders - numeric ID (e.g., `29210372/`) OR username (e.g., `jslopes/`)
 - **Second Level**: Article folders (e.g., `article_19625/`)
-- **Files**: Simplified names (`article.md`, `metadata.json`)
-- **Traceability**: Full context from folder path
+- **Files**: Article-specific names (`article_{id}.md`, `metadata.json`, `images_manifest.json`)
+- **Traceability**: Full context from folder path and filename
 - **Note**: MQL5 profiles use either numeric IDs or usernames in their URLs - both are valid, stable identifiers
 
 ### **Error Recovery**

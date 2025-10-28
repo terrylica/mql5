@@ -268,7 +268,7 @@ async def handle_batch(args, config, logger):
 
     # Process batch
     extractor = MQL5Extractor(config)
-    processor = BatchProcessor(config, extractor)
+    processor = BatchProcessor(config, extractor, use_checkpoint=not args.no_checkpoint)
 
     # Clear checkpoint if not resuming
     if args.no_checkpoint:

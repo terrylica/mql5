@@ -34,16 +34,18 @@ class BatchProcessor:
     - Error handling with continue-on-error
     """
 
-    def __init__(self, config: Config, extractor: MQL5Extractor):
+    def __init__(self, config: Config, extractor: MQL5Extractor, use_checkpoint: bool = True):
         """
         Initialize batch processor.
 
         Args:
             config: Configuration object
             extractor: Configured extractor instance
+            use_checkpoint: Whether to use checkpoint system (default: True)
         """
         self.config = config
         self.extractor = extractor
+        self.use_checkpoint = use_checkpoint
         self.checkpoint_file = Path(config.batch.checkpoint_file)
 
         self.stats = {
@@ -227,6 +229,9 @@ class BatchProcessor:
         Args:
             processed_urls: List of processed URLs
         """
+        if not self.use_checkpoint:
+            return
+
         checkpoint = {
             "timestamp": datetime.now().isoformat(),
             "processed_urls": processed_urls,
