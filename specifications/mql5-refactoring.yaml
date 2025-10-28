@@ -1,23 +1,36 @@
 openapi: 3.1.0
 info:
   title: MQL5 Repository Refactoring Plan
-  version: 1.0.0
+  version: 1.1.0
   description: |
     SSoT for mql5 repository reorganization from 46 files to 11 in root.
     Tracks capabilities, dependencies, SLOs, and implementation findings.
   x-changelog:
+    - version: 1.1.0
+      date: 2025-10-27
+      changes: Implementation complete - all capabilities executed successfully
+      findings:
+        - All 6 CLI verification checks passed
+        - 7 structured commits with SLO documentation
+        - Zero breaking changes except git-cliff -c flag (documented)
+        - Backup branch refactor-backup-20251027 created for rollback
     - version: 1.0.0
       date: 2025-10-27
       changes: Initial plan provisioned from REFACTORING_PROPOSAL.md validation
 
 x-metadata:
   current-state:
-    root-files: 46
+    root-files: 11
     target-root-files: 11
     reduction-percentage: 76
   validation-status: empirically-validated
   validation-agents: 5
   validation-pass-rate: 100
+  implementation-status: completed
+  implementation-date: 2025-10-27
+  verification-status: 100% (6/6 checks passed)
+  commits-created: 7
+  backup-branch: refactor-backup-20251027
 
 components:
   schemas:
@@ -70,7 +83,11 @@ paths:
         correctness: 100% (all 5 checks must pass)
         observability: 100% (command output visible)
         maintainability: N/A (one-time check)
-      x-implementation-findings: []
+      x-implementation-findings:
+        - "Git version: 2.51.1 (>2.0 required) - PASS"
+        - "Backup branch created: refactor-backup-20251027"
+        - "CLI functional: Python 3.13.6 with .venv - PASS"
+        - "Working tree cleaned with 2 preparation commits"
       responses:
         '200':
           description: Prerequisites satisfied
@@ -345,7 +362,14 @@ paths:
         correctness: 100% (CLI functional after refactoring)
         observability: 100% (each check reports status)
         maintainability: 100% (automated verification)
-      x-implementation-findings: []
+      x-implementation-findings:
+        - "Check 1: CLI help works - PASS"
+        - "Check 2: Config loaded (output_dir=mql5_articles) - PASS"
+        - "Check 3: Logging directory auto-created - PASS"
+        - "Check 4: All lib imports work - PASS"
+        - "Check 5: Tests accessible from new location - PASS"
+        - "Check 6: Git-cliff finds config with -c flag - PASS"
+        - "Overall: 6/6 checks passed (100%)"
       responses:
         '200':
           description: CLI verification passed
@@ -383,6 +407,9 @@ paths:
       x-implementation-findings:
         - "Plan file created at /Users/terryli/eon/mql5/specifications/mql5-refactoring.yaml"
         - "TodoWrite synced with capabilities"
+        - "Version updated: 1.0.0 → 1.1.0"
+        - "All capabilities marked with implementation findings"
+        - "Metadata updated: implementation-status=completed"
       responses:
         '200':
           description: Plan updated with new findings
