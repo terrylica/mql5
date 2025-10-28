@@ -1,0 +1,58 @@
+//@version=6
+// Copyright (c) 2018-present, Alex Orekhov (everget)
+// Normalized Average True Range script may be freely distributed under the MIT license.
+indicator('Normalized True Range with Binary Signal', shorttitle = 'NATR-B', overlay=false)
+
+// Input parameters
+atr_length = input.int(title = 'ATR Length', defval = 14, minval = 1)
+norm_lookback = input.int(title = 'Normalization Lookback', defval = 100, minval = 1)
+scale_factor = input.float(title = 'Scale Factor', defval = 2.0, minval = 0.1, step = 0.1)
+smooth_length = input.int(title = 'Smoothing Length', defval = 5, minval = 1)
+
+// Threshold parameters
+threshold_level = input.float(title = 'Volatility Threshold Level', defval = 75, minval = 50, maxval = 100, step = 1)
+threshold_duration = input.int(title = 'Minimum Duration (bars)', defval = 3, minval = 1)
+
+// Calculate ATR and price changes
+atr = ta.atr(atr_length)
+price_change = close - close[1]
+tr_direction = ta.change(atr)
+
+// Calculate rolling statistics for z-score normalization
+rolling_mean = ta.sma(atr, norm_lookback)
+rolling_std = ta.stdev(atr, norm_lookback)
+
+// Z-score normalization
+z_score = (atr - rolling_mean) / rolling_std
+
+// Scale to a more intuitive range (approximately 0-100 for normal distribution)
+// Using sigmoid-like scaling with bounds
+raw_score = 50 * (1 + (z_score / (1 + math.abs(z_score))) / scale_factor)
+scaled_score = ta.ema(math.min(math.max(raw_score, 0), 100), smooth_length)
+
+// Binary signal detection
+is_extreme = scaled_score >= threshold_level
+duration_count = ta.barssince(not is_extreme)
+binary_signal = duration_count >= 0 and duration_count < threshold_duration ? 0 : is_extreme ? 1 : 0
+
+// Color logic based on price and volatility direction
+color_base = price_change > 0 ? (tr_direction > 0 ? color.new(#00ff00, 0) : color.new(#90EE90, 0)) : price_change < 0 ? (tr_direction > 0 ? color.new(#ff0000, 0) : color.new(#FFB6C1, 0)) : color.new(#888888, 0)
+color_binary = binary_signal > 0 ? (price_change > 0 ? color.new(#00ff00, 0) : color.new(#ff0000, 0)) : na
+
+// Plot panel settings
+var cumulative_threshold_breaks = 0
+cumulative_threshold_breaks := binary_signal > 0 ? cumulative_threshold_breaks + 1 : cumulative_threshold_breaks
+
+// Plot continuous line
+plot(scaled_score, color = color_base, title = 'NATR Continuous', linewidth = 1, style = plot.style_line)
+
+// Plot binary signals as circles
+plotshape(binary_signal, style = shape.circle, size = size.normal, location = location.top, color = color_binary, title = 'Binary Signal')
+
+// Plot threshold line
+hline(threshold_level, color = color.new(#FF9800, 50), linestyle = hline.style_dashed, title = 'Threshold')
+hline(50, color = color.new(#888888, 80), linestyle = hline.style_dotted, title = 'Median')
+
+// Labels for significant events (optional - comment out if you don't want the numbers)
+if binary_signal > 0
+    label.new(bar_index, threshold_level, str.tostring(cumulative_threshold_breaks), color = color_binary, textcolor = color.white, style = label.style_none, size = size.tiny)

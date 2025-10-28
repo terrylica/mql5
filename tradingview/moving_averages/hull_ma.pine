@@ -1,0 +1,45 @@
+//@version=6
+indicator(title="Hull Moving Average Enhanced", shorttitle="HMA", overlay=true)
+
+// Input parameters
+var int MIN_LENGTH = 3
+var int MAX_LENGTH = 9999
+
+length = input.int(3000, "HMA Length", minval=MIN_LENGTH, maxval=MAX_LENGTH, tooltip="Number of bars used in calculations")
+src = input.source(close, "Source", tooltip="Source data for calculations")
+showTrendColors = input.bool(true, "Show Trend Colors", tooltip="Color HMA line based on trend direction")
+showTrendBackground = input.bool(true, "Show Trend Background", tooltip="Highlight background based on trend")
+
+// Colors
+bullColor = input.color(color.green, "Bullish Color", group="Colors")
+bearColor = input.color(color.red, "Bearish Color", group="Colors")
+transparencyLevel = input.int(99, "Background Transparency", minval=0, maxval=100, group="Colors")
+
+// Calculate Hull Moving Average
+// Step 1: Calculate WMA with period n/2 and multiply by 2
+wma_half = 2 * ta.wma(src, length/2)
+
+// Step 2: Calculate WMA with period n
+wma_full = ta.wma(src, length)
+
+// Step 3: Calculate the difference
+wma_diff = wma_half - wma_full
+
+// Step 4: Calculate final HMA using sqrt(n) as period
+hullma = ta.wma(wma_diff, math.floor(math.sqrt(length)))
+
+// Determine trend
+isBullish = hullma > hullma[1]
+trendColor = isBullish ? bullColor : bearColor
+
+// Plotting
+plot(hullma, "HMA", color=showTrendColors ? trendColor : color.blue, linewidth=2)
+
+// Background coloring
+bgcolor(showTrendBackground ? color.new(trendColor, transparencyLevel) : na)
+
+// Trend change detection for alerts
+bool trendChange = ta.change(isBullish)
+alertcondition(trendChange, "HMA Trend Change", "Hull MA trend direction changed")
+alertcondition(trendChange and isBullish, "HMA Bullish Cross", "Hull MA turned bullish")
+alertcondition(trendChange and not isBullish, "HMA Bearish Cross", "Hull MA turned bearish")

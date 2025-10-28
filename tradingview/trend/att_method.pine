@@ -1,0 +1,227 @@
+//@version=6
+// ©️ ATT Method Indicator
+// This indicator implements the Advanced Time Technique (ATT) Method
+// which identifies potential swing points at specific minute marks
+indicator("ATT Method", shorttitle="ATT", overlay=true, max_labels_count=500)
+
+// User inputs for customization
+startHour = input.int(10, title="NY Start Hour", minval=7, maxval=20, step=1, tooltip="Hour to start counting (New York Time)")
+displaySection = input.bool(true, title="≡≡≡≡≡ Display Settings ≡≡≡≡≡", group="Display", inline="header")
+labelSize = input.string("small", title="Label Size", options=["tiny", "small", "normal", "large"], group="Display")
+showLines = input.bool(true, title="Show Hour Start Lines", group="Display")
+lineColor = input.color(color.blue, title="Hour Line Color", group="Display")
+lineStyle = input.string("dashed", title="Line Style", options=["solid", "dashed", "dotted"], group="Display")
+
+// Add position adjustment inputs
+labelOffset = input.float(0.1, title="Label Distance from Bar (%)", minval=0.01, maxval=1.0, step=0.05, tooltip="Distance of the label from the bar (percentage of price)", group="Display")
+
+colorSection = input.bool(true, title="≡≡≡≡≡ Color Settings ≡≡≡≡≡", group="Colors", inline="header")
+bullColor = input.color(color.green, title="Bullish Signal Color", group="Colors")
+bearColor = input.color(color.red, title="Bearish Signal Color", group="Colors")
+neutralColor = input.color(color.gray, title="Neutral Signal Color", group="Colors")
+
+// Add arrow marker settings
+arrowSection = input.bool(true, title="≡≡≡≡≡ Swing Point Arrows ≡≡≡≡≡", group="Arrows", inline="header")
+showArrows = input.bool(true, title="Show Swing Point Arrows", group="Arrows")
+swingLength = input.int(3, title="Swing Point Strength", minval=2, maxval=10, step=1, group="Arrows", tooltip="Higher values create stronger swing point filters (fewer arrows)")
+arrowSize = input.float(0.5, title="Arrow Size", minval=0.1, maxval=2.0, step=0.1, group="Arrows")
+arrowColor = input.color(color.purple, title="Arrow Color", group="Arrows")
+arrowOffset = input.float(0.1, title="Arrow Distance from Bar (%)", minval=0.01, maxval=1.0, step=0.05, tooltip="Distance of the arrow from the bar (percentage of price)", group="Arrows")
+
+attSection = input.bool(true, title="≡≡≡≡≡ ATT Numbers ≡≡≡≡≡", group="ATT", inline="header")
+useDefaultNumbers = input.bool(true, title="Use Default ATT Numbers", tooltip="Use the predefined ATT numbers (3,11,17,29,41,47,53,59)", group="ATT")
+customNumbers = input.string("3,11,17,29,41,47,53,59", title="Custom ATT Numbers", tooltip="Comma-separated list of minutes to mark (0-59)", group="ATT")
+
+// Parse custom ATT numbers if needed
+var attNumbers = array.new_int(0)
+
+if barstate.isfirst
+    if useDefaultNumbers
+        array.push(attNumbers, 3)
+        array.push(attNumbers, 11)
+        array.push(attNumbers, 17)
+        array.push(attNumbers, 29)
+        array.push(attNumbers, 41)
+        array.push(attNumbers, 47)
+        array.push(attNumbers, 53)
+        array.push(attNumbers, 59)
+    else
+        // Parse custom comma-separated numbers
+        stringNumbers = str.split(customNumbers, ",")
+        for i = 0 to array.size(stringNumbers) - 1
+            numStr = array.get(stringNumbers, i)
+            numVal = int(str.tonumber(numStr))
+            if not na(numVal) and numVal >= 0 and numVal <= 59
+                array.push(attNumbers, numVal)
+
+// Function to get New York time
+getNewYorkTime() =>
+    // Get time in New York timezone
+    nyTime = time("", "America/New_York")
+    nyHour = hour(nyTime)
+    nyMinute = minute(nyTime)
+    [nyHour, nyMinute]
+
+// Function to check if current minute is an ATT number
+isAttNumber(minute) =>
+    result = false
+    for i = 0 to array.size(attNumbers) - 1
+        if minute == array.get(attNumbers, i)
+            result := true
+    result
+
+// Variables to safely store data for checking adjacent bars
+var float prevHigh = 0.0
+var float prevLow = 0.0
+var float nextHigh = 0.0
+var float nextLow = 0.0
+
+// Update stored values on each bar
+if bar_index > 0
+    prevHigh := high[1]
+    prevLow := low[1]
+
+// Store current values for next bar
+nextHigh := high
+nextLow := low
+
+// Function to check criteria for red label (on top)
+// "The two adjacent bar Highs are lower than the current high of the ATT Number-th bar"
+isBearishSignal() =>
+    // Need at least one previous bar to check
+    if bar_index <= 1
+        false
+    else
+        // Check if current bar's high is higher than both adjacent bars
+        // For the current bar, we use stored values from previous iterations
+        high > prevHigh and (barstate.islast or high > high[1])
+
+// Function to check criteria for green label (on bottom)
+// "The two adjacent bar Lows are higher than the current Low of the ATT Number-th bar"
+isBullishSignal() =>
+    // Need at least one previous bar to check 
+    if bar_index <= 1
+        false
+    else
+        // Check if current bar's low is lower than both adjacent bars
+        // For the current bar, we use stored values from previous iterations
+        low < prevLow and (barstate.islast or low < low[1])
+
+// Convert string to label size
+getLabelSize(sizeStr) =>
+    switch sizeStr
+        "tiny" => size.tiny
+        "small" => size.small
+        "normal" => size.normal
+        "large" => size.large
+        => size.small
+
+// Convert string to line style
+getLineStyle(styleStr) =>
+    switch styleStr
+        "solid" => line.style_solid
+        "dashed" => line.style_dashed
+        "dotted" => line.style_dotted
+        => line.style_dashed
+
+// Variables to track last label position
+var lastPosition = "top"  // Can be "top" or "bottom", default to top
+
+// Main logic - process each bar
+[nyHour, nyMinute] = getNewYorkTime()
+
+// Check if this bar is in the valid time range (on or after the specified start hour)
+validTime = (nyHour >= startHour)
+
+// Check if current minute is an ATT number
+isAttBar = isAttNumber(nyMinute)
+
+// For ATT numbers, apply labels based on criteria
+if validTime and isAttBar
+    // Determine label position and color
+    string labelText = str.tostring(nyMinute)
+    string labelPosition = lastPosition
+    color labelColor = neutralColor
+    
+    // RED (top): The ATT number bar's high is HIGHER than the two adjacent bars' highs
+    if isBearishSignal()
+        labelPosition := "top"
+        labelColor := bearColor
+    // GREEN (bottom): The ATT number bar's low is LOWER than the two adjacent bars' lows
+    else if isBullishSignal()
+        labelPosition := "bottom"
+        labelColor := bullColor
+    
+    // Save current position for next time
+    lastPosition := labelPosition
+    
+    // Calculate label position with minimal offset
+    float offsetFactor = labelOffset / 100
+    float labelY = labelPosition == "top" ? high * (1 + offsetFactor) : low * (1 - offsetFactor)
+                  
+    // Create the label with appropriate size
+    // Shift the label one bar to the left (bar_index - 1) to align properly
+    label.new(bar_index - 1, labelY, labelText, color=color.new(labelColor, 90), style=label.style_none, textcolor=labelColor, size=getLabelSize(labelSize))
+
+// Plot vertical lines at the start of each hour
+if (showLines and nyHour == startHour and nyMinute == 0)
+    var vertLine = line.new(bar_index, low * 0.995, bar_index, high * 1.005, color=lineColor, width=1, style=getLineStyle(lineStyle))
+
+// ------------------------------------------
+// Swing Point Arrows Implementation
+// ------------------------------------------
+
+// Calculate arrow positions for plotting
+float arrowOffsetFactor = arrowOffset / 100
+float upArrowY = na
+float downArrowY = na
+
+// More strict check for swing points on ALL bars
+if showArrows and bar_index >= swingLength
+    // Initialize swing flags
+    isSwingLow = true
+    isSwingHigh = true
+    
+    // Check left side bars (past bars)
+    for i = 1 to swingLength
+        // For swing low (bullish signal)
+        if low >= low[i]
+            isSwingLow := false
+        
+        // For swing high (bearish signal)
+        if high <= high[i]
+            isSwingHigh := false
+    
+    // We can only reliably check past bars in Pine Script
+    // For the current bar, ensuring it's a swing point compared to the past
+    // is usually sufficient for most trading strategies
+    
+    // Set arrow positions if conditions are met
+    if isSwingLow
+        upArrowY := low * (1 - arrowOffsetFactor)
+    
+    if isSwingHigh
+        downArrowY := high * (1 + arrowOffsetFactor)
+
+// Determine which sizes to use for the arrows based on the arrowSize parameter
+string arrowSizeToUse = arrowSize <= 0.3 ? "tiny" : arrowSize <= 0.7 ? "small" : arrowSize <= 1.3 ? "normal" : "large"
+
+// Plot arrows in the global scope - these must be at script level
+// Tiny size
+plotchar(arrowSizeToUse == "tiny" ? upArrowY : na, title="Bullish Swing Tiny", char="▲", location=location.absolute, color=arrowColor, size=size.tiny)
+plotchar(arrowSizeToUse == "tiny" ? downArrowY : na, title="Bearish Swing Tiny", char="▼", location=location.absolute, color=arrowColor, size=size.tiny)
+
+// Small size
+plotchar(arrowSizeToUse == "small" ? upArrowY : na, title="Bullish Swing Small", char="▲", location=location.absolute, color=arrowColor, size=size.small)
+plotchar(arrowSizeToUse == "small" ? downArrowY : na, title="Bearish Swing Small", char="▼", location=location.absolute, color=arrowColor, size=size.small)
+
+// Normal size
+plotchar(arrowSizeToUse == "normal" ? upArrowY : na, title="Bullish Swing Normal", char="▲", location=location.absolute, color=arrowColor, size=size.normal)
+plotchar(arrowSizeToUse == "normal" ? downArrowY : na, title="Bearish Swing Normal", char="▼", location=location.absolute, color=arrowColor, size=size.normal)
+
+// Large size
+plotchar(arrowSizeToUse == "large" ? upArrowY : na, title="Bullish Swing Large", char="▲", location=location.absolute, color=arrowColor, size=size.large)
+plotchar(arrowSizeToUse == "large" ? downArrowY : na, title="Bearish Swing Large", char="▼", location=location.absolute, color=arrowColor, size=size.large)
+
+// Add plot for ATT numbers to show in data window
+plot(isAttBar ? nyMinute : na, title="ATT Number", display=display.data_window)

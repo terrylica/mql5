@@ -1,0 +1,230 @@
+//@version=6
+indicator("Triple TF CCI Color Overlay", overlay=true, shorttitle="CCI Triple Colors")
+
+// =================== User Input Parameters ===================
+// CCI Settings
+cciLength = input.int(title="CCI Length", defval=14, minval=7, maxval=2400, group="CCI Settings")
+cciLowerThreshold = input.int(title="CCI Lower Threshold", defval=-100, maxval=0, tooltip="Lower boundary of neutral zone", group="CCI Settings")
+cciUpperThreshold = input.int(title="CCI Upper Threshold", defval=100, minval=0, tooltip="Upper boundary of neutral zone", group="CCI Settings")
+inactiveThreshold = input.int(title="Inactive Count Threshold", defval=8, minval=3, maxval=100, tooltip="Number of consecutive inactive bars needed to trigger red coloring", group="CCI Settings")
+
+// Timeframe Settings
+auto_tf = "Auto"
+tf1 = input.string(defval=auto_tf, title="Primary TF", options=[auto_tf, "1S", "5S", "10S", "15S", "30S", "45S", "1", "3", "5", "15", "30", "60", "240", "1D", "1W"], group="Timeframes")
+tf2 = input.string(defval=auto_tf, title="Secondary TF", options=[auto_tf, "1S", "5S", "10S", "15S", "30S", "45S", "1", "3", "5", "15", "30", "60", "240", "1D", "1W"], group="Timeframes")
+tf3 = input.string(defval=auto_tf, title="Tertiary TF", options=[auto_tf, "1S", "5S", "10S", "15S", "30S", "45S", "1", "3", "5", "15", "30", "60", "240", "1D", "1W"], group="Timeframes")
+
+// Get current chart timeframe
+current_tf = timeframe.period
+
+// Function to get next higher timeframe
+getNextTimeframe(current) =>
+    if current == "1S"
+        "5S"
+    else if current == "5S"
+        "10S"
+    else if current == "10S"
+        "15S"
+    else if current == "15S"
+        "30S"
+    else if current == "30S"
+        "45S"
+    else if current == "45S"
+        "1"
+    else if current == "1"
+        "3"
+    else if current == "3"
+        "5"
+    else if current == "5"
+        "15"
+    else if current == "15"
+        "30"
+    else if current == "30"
+        "60"
+    else if current == "60"
+        "240"
+    else if current == "240"
+        "1D"
+    else if current == "1D"
+        "1W"
+    else
+        current  // fallback to current if no higher timeframe available
+
+// Helper function to ensure timeframe has multiplier
+ensureTimeframeMultiplier(tf) =>
+    if tf == "D"
+        "1D"
+    else if tf == "W"
+        "1W"
+    else
+        tf
+
+// Determine final timeframes based on Auto selection
+tf1_final = tf1 == auto_tf ? ensureTimeframeMultiplier(current_tf) : tf1
+tf2_final = tf2 == auto_tf ? getNextTimeframe(ensureTimeframeMultiplier(current_tf)) : tf2
+tf3_final = tf3 == auto_tf ? getNextTimeframe(getNextTimeframe(ensureTimeframeMultiplier(current_tf))) : tf3
+
+// Fetch data for all timeframes
+hlc3_tf1 = request.security(syminfo.tickerid, tf1_final, hlc3)
+hlc3_tf2 = request.security(syminfo.tickerid, tf2_final, hlc3)
+hlc3_tf3 = request.security(syminfo.tickerid, tf3_final, hlc3)
+
+// CCI calculations
+cci_tf1 = ta.cci(hlc3_tf1, cciLength)
+cci_tf2 = ta.cci(hlc3_tf2, cciLength)
+cci_tf3 = ta.cci(hlc3_tf3, cciLength)
+
+// Neutral counters
+var int countTF1 = 0
+var int countTF2 = 0
+var int countTF3 = 0
+
+countTF1 := cci_tf1 >= cciLowerThreshold and cci_tf1 <= cciUpperThreshold ? countTF1 + 1 : 0
+countTF2 := cci_tf2 >= cciLowerThreshold and cci_tf2 <= cciUpperThreshold ? countTF2 + 1 : 0
+countTF3 := cci_tf3 >= cciLowerThreshold and cci_tf3 <= cciUpperThreshold ? countTF3 + 1 : 0
+
+// Activation conditions
+tf1Active = countTF1 >= 6
+tf2Active = countTF2 >= 6
+tf3Active = countTF3 >= 6
+allActive = tf1Active and tf2Active and tf3Active
+
+// Track consecutive inactive bars (simplified version)
+var int inactiveCount = 0
+bool isCurrentlyInactive = not tf1Active and not tf2Active and not tf3Active
+
+// Simple state management
+if isCurrentlyInactive
+    inactiveCount := inactiveCount + 1
+else
+    inactiveCount := 0  // Reset when any timeframe becomes active
+
+// Track previous allActive state for alert triggering
+var bool prevAllActive = false
+
+// Alert condition
+alertcondition(allActive and not prevAllActive, title="All Timeframes Active", message="Triple TF CCI: All timeframes are now active! {{ticker}}, {{interval}}")
+
+// Update previous state
+prevAllActive := allActive
+
+// Color scheme for bars - simplified to only red and white
+colorScheme = switch
+    allActive => color.new(color.white, close >= open ? 40 : 20)  // Keep white for allActive
+    inactiveCount >= inactiveThreshold => color.new(color.red, 0)  // Keep red for inactive threshold
+    => na  // All other conditions have no special color
+
+// Compact single-line barcolor to avoid line break issues
+barcolor(not na(colorScheme) ? colorScheme : na)  // Use default chart colors for all other bars
+
+// =================== All Active Line ===================
+// Tracks price connections between consecutive All-Active sequences
+// 
+// The line:
+// - Starts at open/close price of first active bar in a new sequence
+// - Extends horizontally until next All-Active sequence begins
+// - Creates visual connection between sequential activation periods
+// - Treated as continuous during consecutive activations
+
+// Track sequence state
+var float sequenceStartPrice = na          // Price at beginning of AllActive sequence
+var bool wasActive = false                 // Tracks previous bar's active state for edge detection
+var float connectingLineValue = na         // Current value to plot for inter-sequence connection
+var bool newSequenceStarting = false       // Detects start of new sequence after inactivity
+
+// Track sequence price range (used for relative strength calculations)
+var float sequenceHighPrice = na           // Highest price during active sequence
+var float sequenceLowPrice = na            // Lowest price during active sequence
+var float sequencePriceRange = na          // Price range (high-low) of the active sequence
+
+// Track first inactive bar characteristics
+var float firstInactiveBarStrength = na    // Body size relative to sequence range (>1 = stronger, <1 = weaker)
+var int firstInactiveBarDirection = 0      // 1 = up, -1 = down, 0 = neutral/doji
+
+// Detect new sequence starting (was inactive, now active)
+newSequenceStarting := allActive and not wasActive
+
+// Update sequence high/low during active periods
+if allActive
+    sequenceHighPrice := na(sequenceHighPrice) ? high : math.max(sequenceHighPrice, high)
+    sequenceLowPrice := na(sequenceLowPrice) ? low : math.min(sequenceLowPrice, low)
+    sequencePriceRange := sequenceHighPrice - sequenceLowPrice
+    
+    // Capture price at start of new sequence
+    if newSequenceStarting
+        sequenceStartPrice := close
+else if not wasActive  // Reset when not in or right after sequence
+    sequenceHighPrice := na
+    sequenceLowPrice := na
+    sequencePriceRange := na
+
+// Update line value and tracking
+if newSequenceStarting
+    connectingLineValue := close   // Start line at closing price of first active bar
+else if allActive
+    connectingLineValue := na      // Hide line during active sequence
+else
+    connectingLineValue := sequenceStartPrice  // Maintain horizontal line at sequence start price
+
+// Detect sequence end for analytics
+bool isSequenceEnd = not allActive and wasActive
+
+// Calculate inactive bar metrics when sequence ends
+if isSequenceEnd
+    // Calculate first inactive bar's body size relative to sequence range
+    float inactiveBarBodySize = math.abs(close - open)
+    firstInactiveBarStrength := sequencePriceRange != 0 ? inactiveBarBodySize / sequencePriceRange : na
+    
+    // Determine direction (-1 = down, 1 = up, 0 = doji)
+    firstInactiveBarDirection := close > open ? 1 : close < open ? -1 : 0
+
+// Update previous state
+wasActive := allActive
+
+// Plot the connecting line (spans between activation sequences)
+plot(connectingLineValue, title="All Active Connection Line", 
+     color=color.new(color.gray, 0), 
+     style=plot.style_linebr, linewidth=2)
+
+// =================== Connection Length Tracking ===================
+// Track sequence points and lengths
+var int[] inactivePeriodLengths = array.new_int()      // Length of inactive periods between active sequences
+var float lastActiveClose = na                         // Last allActive close price
+var int lastActiveBarIndex = na                        // Bar index of last allActive
+var bool inActiveSequence = false                      // Whether we're in an active sequence
+var int consecutiveActiveBars = 0                      // Count of consecutive active bars
+
+// Update tracking variables
+if allActive
+    // Handle start of new active sequence
+    if not inActiveSequence
+        inActiveSequence := true
+        consecutiveActiveBars := 1
+        // If we have a previous non-consecutive point, calculate and store connection details
+        if not na(lastActiveClose) and (bar_index - lastActiveBarIndex) > 1
+            int inactivePeriodLength = bar_index - lastActiveBarIndex
+            array.push(inactivePeriodLengths, inactivePeriodLength)
+    else
+        consecutiveActiveBars := consecutiveActiveBars + 1
+    
+    // Always update last active point
+    lastActiveClose := close
+    lastActiveBarIndex := bar_index
+else
+    inActiveSequence := false
+    consecutiveActiveBars := 0
+
+// Keep only last 10 measurements for memory efficiency
+while array.size(inactivePeriodLengths) > 10
+    array.shift(inactivePeriodLengths)
+
+// Get latest measurements for plotting/display
+var int lastInactivePeriodLength = na
+
+if array.size(inactivePeriodLengths) > 0
+    lastInactivePeriodLength := array.get(inactivePeriodLengths, array.size(inactivePeriodLengths) - 1)
+
+// Plot dots at sequence start points
+plot(newSequenceStarting ? close : na, title="Sequence Connection Points", 
+     color=color.new(color.gray, 0), 
+     style=plot.style_circles, linewidth=3)

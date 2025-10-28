@@ -1,0 +1,149 @@
+//@version=6
+indicator("Inactive Period Length Tracker", overlay=false, precision=0)
+
+// =================== User Input Parameters ===================
+// CCI Settings (needed for allActive calculation)
+cciLength = input.int(title="CCI Length", defval=14, minval=7, maxval=2400, group="CCI Settings")
+cciLowerThreshold = input.int(title="CCI Lower Threshold", defval=-100, maxval=0, tooltip="Lower boundary of neutral zone", group="CCI Settings")
+cciUpperThreshold = input.int(title="CCI Upper Threshold", defval=100, minval=0, tooltip="Upper boundary of neutral zone", group="CCI Settings")
+
+// Tracking Settings
+lookbackPeriods = input.int(title="Average Lookback Periods", defval=5, minval=1, maxval=50, tooltip="Number of inactive periods to include in average", group="Tracking Settings")
+smoothingPeriods = input.int(title="Smoothing Periods", defval=3, minval=1, maxval=20, tooltip="Periods for smoothing the average line", group="Tracking Settings")
+
+// Timeframe Settings
+auto_tf = "Auto"
+tf1 = input.string(defval=auto_tf, title="Primary TF", options=[auto_tf, "1S", "5S", "10S", "15S", "30S", "45S", "1", "3", "5", "15", "30", "60", "240", "1D", "1W"], group="Timeframes")
+tf2 = input.string(defval=auto_tf, title="Secondary TF", options=[auto_tf, "1S", "5S", "10S", "15S", "30S", "45S", "1", "3", "5", "15", "30", "60", "240", "1D", "1W"], group="Timeframes")
+tf3 = input.string(defval=auto_tf, title="Tertiary TF", options=[auto_tf, "1S", "5S", "10S", "15S", "30S", "45S", "1", "3", "5", "15", "30", "60", "240", "1D", "1W"], group="Timeframes")
+
+// Function to get next higher timeframe (reused from cci_node.pine)
+getNextTimeframe(current) =>
+    if current == "1S"
+        "5S"
+    else if current == "5S"
+        "10S"
+    else if current == "10S"
+        "15S"
+    else if current == "15S"
+        "30S"
+    else if current == "30S"
+        "45S"
+    else if current == "45S"
+        "1"
+    else if current == "1"
+        "3"
+    else if current == "3"
+        "5"
+    else if current == "5"
+        "15"
+    else if current == "15"
+        "30"
+    else if current == "30"
+        "60"
+    else if current == "60"
+        "240"
+    else if current == "240"
+        "1D"
+    else if current == "1D"
+        "1W"
+    else
+        current
+
+// Helper function to ensure timeframe has multiplier (reused from cci_node.pine)
+ensureTimeframeMultiplier(tf) =>
+    if tf == "D"
+        "1D"
+    else if tf == "W"
+        "1W"
+    else
+        tf
+
+// Determine final timeframes (reused from cci_node.pine)
+current_tf = timeframe.period
+tf1_final = tf1 == auto_tf ? ensureTimeframeMultiplier(current_tf) : tf1
+tf2_final = tf2 == auto_tf ? getNextTimeframe(ensureTimeframeMultiplier(current_tf)) : tf2
+tf3_final = tf3 == auto_tf ? getNextTimeframe(getNextTimeframe(ensureTimeframeMultiplier(current_tf))) : tf3
+
+// Calculate CCI values for each timeframe
+hlc3_tf1 = request.security(syminfo.tickerid, tf1_final, hlc3, barmerge.gaps_off, barmerge.lookahead_off)
+hlc3_tf2 = request.security(syminfo.tickerid, tf2_final, hlc3, barmerge.gaps_off, barmerge.lookahead_off)
+hlc3_tf3 = request.security(syminfo.tickerid, tf3_final, hlc3, barmerge.gaps_off, barmerge.lookahead_off)
+
+// Calculate CCI for each timeframe
+cci1 = ta.cci(hlc3_tf1, cciLength)
+cci2 = ta.cci(hlc3_tf2, cciLength)
+cci3 = ta.cci(hlc3_tf3, cciLength)
+
+// Neutral counters for each timeframe
+var int countTF1 = 0
+var int countTF2 = 0
+var int countTF3 = 0
+
+// Update counters based on CCI values
+countTF1 := cci1 >= cciLowerThreshold and cci1 <= cciUpperThreshold ? countTF1 + 1 : 0
+countTF2 := cci2 >= cciLowerThreshold and cci2 <= cciUpperThreshold ? countTF2 + 1 : 0
+countTF3 := cci3 >= cciLowerThreshold and cci3 <= cciUpperThreshold ? countTF3 + 1 : 0
+
+// Determine active state for each timeframe with counter thresholds
+tf1Active = countTF1 >= 6
+tf2Active = countTF2 >= 6
+tf3Active = countTF3 >= 6
+allActive = tf1Active and tf2Active and tf3Active
+
+// Track sequence points and lengths
+var int[] inactivePeriodLengths = array.new_int()      // Length of inactive periods between active sequences
+var float lastActiveClose = na                         // Last allActive close price
+var int lastActiveBarIndex = na                        // Bar index of last allActive
+var bool inActiveSequence = false                      // Whether we're in an active sequence
+var bool wasActive = false                             // Previous bar's active state
+var int currentInactivePeriod = 0                     // Current inactive period length
+
+// Detect sequence transitions
+bool isSequenceEnd = not allActive and wasActive
+bool isSequenceStart = allActive and not wasActive
+
+// Update tracking variables
+if allActive
+    if not inActiveSequence
+        inActiveSequence := true
+        if not na(lastActiveClose) and (bar_index - lastActiveBarIndex) > 1
+            int inactivePeriodLength = bar_index - lastActiveBarIndex
+            array.push(inactivePeriodLengths, inactivePeriodLength)
+            currentInactivePeriod := inactivePeriodLength
+    
+    lastActiveClose := close
+    lastActiveBarIndex := bar_index
+    currentInactivePeriod := 0  // Reset during active periods
+else
+    inActiveSequence := false
+    if wasActive  // Just became inactive
+        currentInactivePeriod := 1
+    else if not inActiveSequence and not na(lastActiveBarIndex)  // Continue counting if we're in an inactive period
+        currentInactivePeriod := bar_index - lastActiveBarIndex
+
+// Update previous state
+wasActive := allActive
+
+// Keep only necessary measurements for memory efficiency
+while array.size(inactivePeriodLengths) > lookbackPeriods
+    array.shift(inactivePeriodLengths)
+
+// Plotting
+// Plot the current inactive period length when we're not in an active sequence
+plot(not allActive ? currentInactivePeriod : na, 
+     title="Current Inactive Period", 
+     color=color.new(color.blue, 0), 
+     linewidth=2, 
+     style=plot.style_line)
+
+// Plot points at sequence transitions
+plotchar(isSequenceEnd ? currentInactivePeriod : na, 
+         title="Sequence End Points", 
+         char="•", 
+         location=location.absolute, 
+         color=color.new(color.gray, 0), 
+         size=size.small)
+
+// Add background color for active periods with slight transparency for better visibility
+bgcolor(allActive ? color.new(color.green, 85) : na) 
