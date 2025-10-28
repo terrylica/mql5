@@ -45,7 +45,8 @@ mql5_articles/
 │   │   └── images_manifest.json
 │   └── article_{id}/
 ├── extraction_summary.json     # Batch statistics
-└── extraction.log             # Detailed logs
+└── logs/
+    └── extraction.log         # Detailed logs
 ```
 
 ---

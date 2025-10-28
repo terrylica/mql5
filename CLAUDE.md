@@ -134,7 +134,8 @@ mql5_articles/
 ├── gamuchiraindawa/          # User folder (username)
 │   └── article_19383/
 ├── extraction_summary.json   # Batch statistics
-└── extraction.log           # Detailed logs
+└── logs/
+    └── extraction.log       # Detailed logs
 ```
 
 **User Folder Naming**: MQL5 uses dual identifiers - some profiles use numeric IDs (`29210372`), others use usernames (`jslopes`, `gamuchiraindawa`). Both are stable, unique identifiers extracted from the article's author meta tag. This is expected MQL5 behavior, not a bug.
@@ -166,7 +167,7 @@ batch:
 
 logging:
   level: "INFO" # DEBUG, INFO, WARNING, ERROR
-  file: "extraction.log"
+  file: "logs/extraction.log"
   console: true
 
 validation:
@@ -276,7 +277,7 @@ discovery:
 ### **4. Comprehensive Logging**
 
 ```bash
-# File logging (extraction.log)
+# File logging (logs/extraction.log)
 # Real-time console output
 # Structured with timestamps and article IDs
 
@@ -356,7 +357,7 @@ This will:
 .venv/bin/python mql5_extract.py batch urls.txt
 
 # Check logs
-tail -f extraction.log
+tail -f logs/extraction.log
 
 # Resume from checkpoint
 .venv/bin/python mql5_extract.py batch urls.txt --resume
