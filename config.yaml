@@ -44,7 +44,7 @@ logging:
   level: "INFO"
 
   # Log file path (set to empty string to disable file logging)
-  file: "extraction.log"
+  file: "logs/extraction.log"
 
   # Enable console logging output
   console: true

@@ -21,7 +21,7 @@ wheels/
 
 # Extraction outputs
 mql5_articles/
-extraction.log
+logs/
 .extraction_checkpoint.json
 
 # Test files

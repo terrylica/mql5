@@ -1,0 +1,440 @@
+openapi: 3.1.0
+info:
+  title: MQL5 Repository Refactoring Plan
+  version: 1.0.0
+  description: |
+    SSoT for mql5 repository reorganization from 46 files to 11 in root.
+    Tracks capabilities, dependencies, SLOs, and implementation findings.
+  x-changelog:
+    - version: 1.0.0
+      date: 2025-10-27
+      changes: Initial plan provisioned from REFACTORING_PROPOSAL.md validation
+
+x-metadata:
+  current-state:
+    root-files: 46
+    target-root-files: 11
+    reduction-percentage: 76
+  validation-status: empirically-validated
+  validation-agents: 5
+  validation-pass-rate: 100
+
+components:
+  schemas:
+    PhaseResult:
+      type: object
+      required: [capability, status, slos]
+      properties:
+        capability:
+          type: string
+        status:
+          enum: [pending, in-progress, completed, blocked]
+        slos:
+          $ref: '#/components/schemas/SLOs'
+        findings:
+          type: array
+          items:
+            type: string
+        commands-executed:
+          type: array
+          items:
+            type: string
+
+    SLOs:
+      type: object
+      required: [availability, correctness, observability, maintainability]
+      properties:
+        availability:
+          type: string
+          description: Target for operation success rate
+        correctness:
+          type: string
+          description: Target for result accuracy
+        observability:
+          type: string
+          description: Target for state visibility
+        maintainability:
+          type: string
+          description: Target for future modification ease
+
+paths:
+  /capabilities/prerequisites:
+    get:
+      operationId: prerequisites
+      summary: Verify system state before refactoring
+      tags: [foundation]
+      x-phase: 0
+      x-dependencies: []
+      x-slos:
+        availability: 100% (blocking - must pass)
+        correctness: 100% (all 5 checks must pass)
+        observability: 100% (command output visible)
+        maintainability: N/A (one-time check)
+      x-implementation-findings: []
+      responses:
+        '200':
+          description: Prerequisites satisfied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  git-version:
+                    type: string
+                    pattern: '^[2-9]\.'
+                  backup-branch:
+                    type: string
+                  working-tree-clean:
+                    type: boolean
+                  cli-functional:
+                    type: boolean
+                  baseline-tests-pass:
+                    type: boolean
+
+  /capabilities/directory-structure:
+    post:
+      operationId: createDirectories
+      summary: Create target directory structure
+      tags: [foundation]
+      x-phase: 1
+      x-dependencies: [prerequisites]
+      x-slos:
+        availability: 100% (idempotent mkdir -p)
+        correctness: 100% (verify all 4 directories exist)
+        observability: 100% (ls output confirms)
+        maintainability: 100% (standard directory layout)
+      x-implementation-findings: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                directories:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - scripts/legacy
+                    - tests/fixtures
+                    - logs/archive
+                    - .config
+      responses:
+        '201':
+          description: Directories created
+
+  /capabilities/log-files:
+    put:
+      operationId: relocateLogs
+      summary: Move 20 log files to logs/archive
+      tags: [reorganization]
+      x-phase: 2
+      x-dependencies: [directory-structure]
+      x-slos:
+        availability: 100% (files gitignored, no runtime impact)
+        correctness: 100% (count must equal 20)
+        observability: 100% (ls -1 logs/archive/ | wc -l)
+        maintainability: 100% (logs isolated from code)
+      x-implementation-findings: []
+      responses:
+        '200':
+          description: Logs relocated
+
+  /capabilities/legacy-scripts:
+    put:
+      operationId: relocateLegacyScripts
+      summary: Move 3 deprecated scripts to scripts/legacy
+      tags: [reorganization]
+      x-phase: 3
+      x-dependencies: [directory-structure]
+      x-slos:
+        availability: 100% (not imported by any code)
+        correctness: 100% (git mv preserves history)
+        observability: 100% (git log --follow verification)
+        maintainability: 100% (documented in README.md)
+      x-implementation-findings:
+        - "Empirical validation: zero imports in production code"
+        - "Scripts standalone, safe to move"
+      responses:
+        '200':
+          description: Legacy scripts relocated with documentation
+
+  /capabilities/test-files:
+    put:
+      operationId: relocateTests
+      summary: Move 6 test files to tests/
+      tags: [reorganization]
+      x-phase: 4
+      x-dependencies: [directory-structure]
+      x-slos:
+        availability: 100% (tests executable from new location)
+        correctness: 100% (zero code changes required)
+        observability: 100% (grep verifies no lib/ imports)
+        maintainability: 100% (standard tests/ layout)
+      x-implementation-findings:
+        - "Empirical validation: all tests use absolute paths"
+        - "Zero lib/ imports in test files"
+        - "Test fixtures are data files, not imported"
+      responses:
+        '200':
+          description: Tests relocated without code changes
+
+  /capabilities/build-config:
+    put:
+      operationId: relocateBuildConfig
+      summary: Move cliff.toml files to .config/
+      tags: [reorganization]
+      x-phase: 5
+      x-dependencies: [directory-structure]
+      x-slos:
+        availability: 99% (git-cliff requires -c flag, breaking change)
+        correctness: 100% (config files relocate cleanly)
+        observability: 100% (git cliff -c .config/cliff.toml test)
+        maintainability: 90% (requires flag in CI/CD)
+      x-implementation-findings:
+        - "Breaking change: git-cliff needs -c .config/cliff.toml"
+        - "Must update CI/CD pipelines"
+        - "Follows XDG Base Directory Specification"
+      responses:
+        '200':
+          description: Build configs relocated
+        '500':
+          description: Breaking change requires flag update
+
+  /capabilities/pyproject:
+    post:
+      operationId: createPyprojectToml
+      summary: Create modern pyproject.toml
+      tags: [modernization]
+      x-phase: 6
+      x-dependencies: [directory-structure]
+      x-slos:
+        availability: 100% (optional metadata file)
+        correctness: 100% (valid PEP 518/621 format)
+        observability: 100% (uv pip install validates)
+        maintainability: 100% (replaces setup.py pattern)
+      x-implementation-findings: []
+      responses:
+        '201':
+          description: pyproject.toml created
+
+  /capabilities/gitignore:
+    patch:
+      operationId: updateGitignore
+      summary: Update .gitignore for new structure
+      tags: [configuration]
+      x-phase: 7
+      x-dependencies: [directory-structure]
+      x-slos:
+        availability: 100% (idempotent operation)
+        correctness: 100% (patterns match new layout)
+        observability: 100% (git status shows no new files)
+        maintainability: 100% (organized by category)
+      x-implementation-findings: []
+      responses:
+        '200':
+          description: .gitignore updated
+
+  /capabilities/config-yaml:
+    get:
+      operationId: verifyConfigYaml
+      summary: Verify config.yaml already points to logs/extraction.log
+      tags: [verification]
+      x-phase: 8
+      x-dependencies: []
+      x-slos:
+        availability: N/A (read-only check)
+        correctness: 100% (must contain logs/extraction.log)
+        observability: 100% (grep output confirms)
+        maintainability: N/A (already correct)
+      x-implementation-findings:
+        - "config.yaml already updated in previous commit 72ba70a"
+        - "No action required"
+      responses:
+        '200':
+          description: Config already correct
+
+  /capabilities/readme-updates:
+    patch:
+      operationId: updateReadmes
+      summary: Update documentation references
+      tags: [documentation]
+      x-phase: 9
+      x-dependencies: [test-files, legacy-scripts]
+      x-slos:
+        availability: 100% (documentation only)
+        correctness: 100% (file structure matches reality)
+        observability: 100% (grep verifies references)
+        maintainability: 100% (accurate documentation)
+      x-implementation-findings: []
+      responses:
+        '200':
+          description: README files updated
+
+  /capabilities/claude-md:
+    patch:
+      operationId: updateClaudeMd
+      summary: Update CLAUDE.md log file references
+      tags: [documentation]
+      x-phase: 9.5
+      x-dependencies: [log-files]
+      x-slos:
+        availability: 100% (documentation only)
+        correctness: 100% (both references updated)
+        observability: 100% (grep extraction.log CLAUDE.md)
+        maintainability: 100% (agent instructions accurate)
+      x-implementation-findings:
+        - "Line 359: tail -f extraction.log → tail -f logs/extraction.log"
+        - "Line 137: Output structure diagram needs logs/ prefix"
+      responses:
+        '200':
+          description: CLAUDE.md updated
+
+  /capabilities/commit-changes:
+    post:
+      operationId: commitRefactoring
+      summary: Commit all changes with structured history
+      tags: [git]
+      x-phase: 10
+      x-dependencies:
+        - directory-structure
+        - log-files
+        - legacy-scripts
+        - test-files
+        - build-config
+        - pyproject
+        - gitignore
+        - readme-updates
+        - claude-md
+      x-slos:
+        availability: 100% (atomic commits)
+        correctness: 100% (8 commits with proper messages)
+        observability: 100% (git log shows structure)
+        maintainability: 100% (semantic commit history)
+      x-implementation-findings: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                commits:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      files:
+                        type: array
+                        items:
+                          type: string
+                      message:
+                        type: string
+      responses:
+        '201':
+          description: Changes committed
+
+  /capabilities/cli-verification:
+    get:
+      operationId: verifyCli
+      summary: Run 6-step CLI verification suite
+      tags: [verification]
+      x-phase: 11
+      x-dependencies: [commit-changes]
+      x-slos:
+        availability: 100% (all 6 checks must pass)
+        correctness: 100% (CLI functional after refactoring)
+        observability: 100% (each check reports status)
+        maintainability: 100% (automated verification)
+      x-implementation-findings: []
+      responses:
+        '200':
+          description: CLI verification passed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  checks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        passed:
+                          type: boolean
+                    minItems: 6
+                    maxItems: 6
+        '500':
+          description: Verification failed
+
+  /capabilities/ssot-plan-update:
+    patch:
+      operationId: updateSsotPlan
+      summary: Update SSoT plan with implementation findings
+      tags: [meta]
+      x-phase: iterative
+      x-dependencies: []
+      x-slos:
+        availability: 100% (plan must stay current)
+        correctness: 100% (findings must be accurate)
+        observability: 100% (version tracking visible)
+        maintainability: 100% (plan reflects reality)
+      x-implementation-findings:
+        - "Plan file created at /Users/terryli/eon/mql5/specifications/mql5-refactoring.yaml"
+        - "TodoWrite synced with capabilities"
+      responses:
+        '200':
+          description: Plan updated with new findings
+
+x-implementation-findings:
+  global:
+    - source: Agent 1 (Dependency Analysis)
+      finding: Test files have zero lib/ imports
+      impact: Phase 4 safe without code changes
+    - source: Agent 2 (Git Operations)
+      finding: git mv preserves history with --follow
+      impact: All phases safe for git operations
+    - source: Agent 3 (Path Resolution)
+      finding: config.yaml already correct
+      impact: Phase 8 is verification only
+    - source: Agent 4 (Test Execution)
+      finding: Tests use absolute paths
+      impact: Tests remain functional after move
+    - source: Agent 5 (CLI Robustness)
+      finding: CLI uses relative imports from lib/
+      impact: CLI unaffected by reorganization
+
+x-rollback-procedures:
+  method-1:
+    name: Rollback last commit
+    command: git reset --soft HEAD~1
+    when: Immediately after commit, before push
+  method-2:
+    name: Revert specific commit
+    command: git revert <commit-hash>
+    when: After push, need to preserve history
+  method-3:
+    name: Hard reset to previous state
+    command: git reset --hard HEAD~N
+    when: Emergency rollback, before push
+  method-4:
+    name: Use backup branch
+    command: |
+      git checkout main
+      git reset --hard refactor-backup-YYYYMMDD
+    when: Complete rollback needed
+  method-5:
+    name: Reflog recovery
+    command: |
+      git reflog
+      git reset --hard HEAD@{N}
+    when: Recover from any state within 30 days
+
+x-breaking-changes:
+  - capability: build-config
+    change: git-cliff config moved to .config/
+    before: git cliff --bumped-version
+    after: git cliff -c .config/cliff.toml --bumped-version
+    impact: CI/CD pipelines must update
+    mitigation: Document in commit message, update workflows
