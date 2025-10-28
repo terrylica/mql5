@@ -1,0 +1,274 @@
+openapi: 3.1.0
+info:
+  title: MQL5 Validation Bug Fixes
+  version: 1.1.0
+  description: |
+    SSoT for fixing critical bugs discovered during 5-agent parallel validation.
+    Addresses documentation-code mismatch and broken CLI flag.
+  x-changelog:
+    - version: 1.1.0
+      date: 2025-10-27
+      changes: Implementation complete - both bugs fixed and verified
+      findings:
+        - BUG-001 fixed with 5 documentation updates
+        - BUG-002 fixed with 3 code changes
+        - Both bugs verified with empirical tests
+        - Commit: 18d536f
+    - version: 1.0.0
+      date: 2025-10-27
+      changes: Initial plan from parallel validation research findings
+
+x-metadata:
+  research-agents: 5
+  validation-tests: 44
+  bugs-found: 2
+  bugs-fixed: 2
+  bugs-severity: high
+  implementation-status: completed
+  implementation-date: 2025-10-27
+  commit-hash: 18d536f
+
+components:
+  schemas:
+    BugFix:
+      type: object
+      required: [bug-id, severity, capability, slos]
+      properties:
+        bug-id:
+          type: string
+        severity:
+          enum: [critical, high, medium, low]
+        capability:
+          type: string
+        root-cause:
+          type: string
+        impact:
+          type: string
+        slos:
+          $ref: '#/components/schemas/SLOs'
+        implementation-findings:
+          type: array
+          items:
+            type: string
+
+    SLOs:
+      type: object
+      required: [availability, correctness, observability, maintainability]
+      properties:
+        availability:
+          type: string
+        correctness:
+          type: string
+        observability:
+          type: string
+        maintainability:
+          type: string
+
+paths:
+  /bugs/documentation-mismatch:
+    patch:
+      operationId: fixDocumentationMismatch
+      summary: Fix article filename documentation mismatch
+      tags: [documentation]
+      x-bug-id: BUG-001
+      x-severity: high
+      x-discovered-by: [Agent 1, Agent 3]
+      x-root-cause: |
+        Implementation uses article_{article_id}.md but documentation
+        references article.md throughout CLAUDE.md
+      x-impact: |
+        User commands fail. Quality verification examples return zero results.
+        find mql5_articles/ -name "article.md" returns 0 files.
+      x-affected-files:
+        - /Users/terryli/eon/mql5/CLAUDE.md
+        - /Users/terryli/eon/mql5/README.md (if affected)
+      x-slos:
+        availability: 100% (documentation only, no runtime impact)
+        correctness: 100% (all references must match implementation)
+        observability: 100% (grep verification possible)
+        maintainability: 100% (accurate user-facing docs)
+      x-implementation-findings:
+        - "Updated 5 locations in CLAUDE.md"
+        - "Line 115: article.md → article_{id}.md"
+        - "Line 127: article.md → article_19625.md"
+        - "Line 387: find pattern → article_*.md"
+        - "Line 403: Example path → article_19625.md"
+        - "Line 428: Description → article_{id}.md"
+        - "Verification: grep -c article\\.md CLAUDE.md → 0 (PASS)"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                search-pattern:
+                  type: string
+                  example: "article\\.md"
+                replace-pattern:
+                  type: string
+                  example: "article_*.md"
+                verification-command:
+                  type: string
+                  example: "grep -n 'article\\.md' CLAUDE.md"
+      responses:
+        '200':
+          description: Documentation updated with correct filename patterns
+
+  /bugs/no-checkpoint-flag-broken:
+    patch:
+      operationId: fixNoCheckpointFlag
+      summary: Fix --no-checkpoint flag to prevent checkpoint creation
+      tags: [functionality]
+      x-bug-id: BUG-002
+      x-severity: high
+      x-discovered-by: [Agent 3]
+      x-root-cause: |
+        mql5_extract.py only clears checkpoint at start.
+        batch_processor.py always calls _save_checkpoint() with no conditional.
+      x-impact: |
+        Users cannot disable checkpoint persistence. Flag is misleading.
+        Checkpoint file created even with --no-checkpoint flag.
+      x-affected-files:
+        - /Users/terryli/eon/mql5/lib/batch_processor.py
+        - /Users/terryli/eon/mql5/mql5_extract.py
+      x-slos:
+        availability: 100% (flag must work as documented)
+        correctness: 100% (no checkpoint file when flag used)
+        observability: 100% (file presence verifiable)
+        maintainability: 95% (adds parameter, minimal refactor)
+      x-implementation-findings:
+        - "lib/batch_processor.py:37 - Added use_checkpoint parameter"
+        - "lib/batch_processor.py:48 - Stored as instance variable"
+        - "lib/batch_processor.py:232-233 - Conditional early return"
+        - "mql5_extract.py:271 - Wire flag to parameter"
+        - "Verification: --no-checkpoint → no .extraction_checkpoint.json (PASS)"
+        - "Test command: batch /tmp/test_checkpoint.txt --no-checkpoint"
+        - "Result: File does not exist after extraction"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                batch-processor-changes:
+                  type: object
+                  properties:
+                    add-parameter:
+                      type: string
+                      example: "use_checkpoint: bool = True"
+                    conditional-logic:
+                      type: string
+                      example: "if not self.use_checkpoint: return"
+                cli-changes:
+                  type: object
+                  properties:
+                    pass-flag:
+                      type: string
+                      example: "use_checkpoint=not args.no_checkpoint"
+      responses:
+        '200':
+          description: Flag now prevents checkpoint creation
+
+  /capabilities/verification-suite:
+    post:
+      operationId: runVerificationTests
+      summary: Run verification tests after fixes
+      tags: [validation]
+      x-dependencies: [fixDocumentationMismatch, fixNoCheckpointFlag]
+      x-slos:
+        availability: 100% (all tests must be executable)
+        correctness: 100% (2/2 tests must pass)
+        observability: 100% (clear pass/fail output)
+        maintainability: 100% (reusable test commands)
+      x-implementation-findings:
+        - "Test 1: Documentation accuracy - PASS"
+        - "Command: grep -c article\\.md CLAUDE.md"
+        - "Expected: 0, Actual: 0"
+        - "Test 2: --no-checkpoint flag behavior - PASS"
+        - "Command: batch with --no-checkpoint, verify no file"
+        - "Expected: file absent, Actual: file absent"
+        - "Overall: 2/2 tests passed (100%)"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tests:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      command:
+                        type: string
+                      expected-result:
+                        type: string
+                  example:
+                    - name: Documentation accuracy
+                      command: "grep -c 'article\\.md' CLAUDE.md"
+                      expected-result: "0"
+                    - name: No-checkpoint flag
+                      command: "rm -f .extraction_checkpoint.json && .venv/bin/python mql5_extract.py batch test.txt --no-checkpoint --max-articles 1 && [ ! -f .extraction_checkpoint.json ]"
+                      expected-result: "exit 0"
+      responses:
+        '200':
+          description: All verification tests passed
+
+  /capabilities/ssot-plan-update:
+    patch:
+      operationId: updateSsotPlan
+      summary: Update SSoT plan with implementation findings
+      tags: [meta]
+      x-slos:
+        availability: 100% (plan must stay current)
+        correctness: 100% (findings accurate)
+        observability: 100% (version tracking visible)
+        maintainability: 100% (plan reflects reality)
+      x-implementation-findings:
+        - "Plan version: 1.0.0 → 1.1.0"
+        - "Updated metadata: implementation-status=completed"
+        - "Added commit-hash: 18d536f"
+        - "Documented all implementation findings"
+        - "Updated x-changelog with v1.1.0 entry"
+      responses:
+        '200':
+          description: Plan updated with findings
+
+x-validation-evidence:
+  agent-1:
+    capability: End-to-end extraction
+    tests: 8
+    passed: 7
+    failed: 1
+    bug-discovered: BUG-001
+    evidence-location: /tmp/extraction-validation/
+  agent-2:
+    capability: Logging paths
+    tests: 7
+    passed: 7
+    failed: 0
+    evidence-location: logs/extraction.log
+  agent-3:
+    capability: Batch processing
+    tests: 10
+    passed: 9
+    failed: 1
+    bug-discovered: BUG-002
+    evidence-location: /tmp/batch-validation/
+  agent-4:
+    capability: Path resolution
+    tests: 5
+    passed: 5
+    failed: 0
+    evidence-location: Multiple working directories tested
+  agent-5:
+    capability: Quality validation
+    tests: 14
+    passed: 14
+    failed: 0
+    evidence-location: /tmp/quality-validation/
+
+x-implementation-findings:
+  global: []
