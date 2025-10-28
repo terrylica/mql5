@@ -24,8 +24,14 @@ mql5_articles/
 logs/
 .extraction_checkpoint.json
 
-# Test files
+# Test files (keeping in tests/fixtures/)
+# Legacy pattern for any stray test files in root
 test_*.txt
+
+# Link checker cache
+.lychee-results.json
+.lychee-results.txt
+.lycheecache
 
 # Environment
 .env
