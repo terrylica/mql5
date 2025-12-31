@@ -63,3 +63,4 @@ Thumbs.db
 *secret*
 *.pem
 *.key
+node_modules/

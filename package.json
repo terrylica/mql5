@@ -1,0 +1,41 @@
+{
+  "name": "mql5",
+  "version": "0.0.0-development",
+  "description": "Production-grade system for extracting MQL5 trading articles with proper formatting, syntax highlighting, and comprehensive metadata.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "release": "semantic-release --no-ci",
+    "release:dry": "semantic-release --no-ci --dry-run",
+    "postrelease": "git fetch origin main:refs/remotes/origin/main --no-tags || true"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/terrylica/mql5.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/terrylica/mql5/issues"
+  },
+  "homepage": "https://github.com/terrylica/mql5#readme",
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/exec": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/release-notes-generator": "^14.1.0",
+    "semantic-release": "^25.0.2"
+  },
+  "engines": {
+    "node": ">=22.14.0"
+  }
+}
