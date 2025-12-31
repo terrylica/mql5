@@ -1,0 +1,47 @@
+# MQL5 Documentation Link Validation Config
+# Used by: lychee --config lychee.toml mql5_articles/complete_docs/ --offline
+
+# Malformed URL artifacts from extraction
+exclude = [
+  'https:/www',           # Missing slash in https
+  'http:/www',            # Missing slash in http
+  '%C2%A0',               # URL-encoded non-breaking space
+  # Rate-limited sites (avoid false positives)
+  '^https?://(www\.)?linkedin\.com',
+  '^https?://(www\.)?(twitter|x)\.com',
+  '^https?://(www\.)?facebook\.com',
+  # MQL5 blocks automated requests with 403
+  '^https?://(www\.)?mql5\.com',
+  '^https?://(www\.)?metaquotes\.net',
+  '^https?://download\.mql5\.com',
+  '^https?://c\.mql5\.com',
+  # GitHub private repos may return 404
+  '^https?://github\.com/Eon-Labs',
+  # API endpoints in article code examples (require auth/tokens)
+  '^https?://api\.telegram\.org',
+  '^https?://api\.openai\.com',
+  '^https?://newsapi\.org',
+  # Sites that block automated requests or have dynamic content
+  '^https?://platform\.hasura\.io',
+  '^https?://nvidia\.github\.io/.*/nvidia-docker\.list',
+  '^https?://(www\.)?kaggle\.com/code/.*/edit',
+  '^https?://gnuplot\.ikir\.ru',
+  '^https?://(www\.)?researchgate\.net',
+  # Documentation example placeholders (not real URLs)
+  '^file://.*URL$',
+]
+
+# Security: exclude private/local networks
+exclude_all_private = true
+
+# Skip email validation (not applicable)
+include_mail = false
+
+# Performance settings
+timeout = 30
+max_concurrency = 8
+max_retries = 2
+retry_wait_time = 5
+
+# Accept common status codes
+accept = [200, 204, 301, 302, 307, 308]

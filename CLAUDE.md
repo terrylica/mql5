@@ -160,6 +160,17 @@ mql5_articles/
 │       ├── patricknjoroge743/
 │       └── tomcat66/
 │
+├── complete_docs/            # Complete MQL5 documentation tree
+│   ├── array/                # Array functions
+│   ├── basis/                # Language basics
+│   ├── constants/            # Constants and enumerations
+│   ├── customind/            # Custom indicators
+│   ├── event_handlers/       # Event handler functions
+│   ├── trading/              # Trading operations
+│   ├── standardlibrary/      # Standard library
+│   ├── complete_docs_urls.txt  # 98 documentation URLs
+│   └── extraction_summary.json # Extraction statistics (98 pages, 2,063 blocks, 242 code blocks, 313 tables)
+│
 ├── extraction_summary.json   # Batch statistics
 └── extraction.log           # Detailed logs
 ```
@@ -170,6 +181,10 @@ mql5_articles/
 - **Topic Collections** (e.g., `tick_data/`, `python_integration/`): Organized by research area
   - `official_docs/`: Official MQL5 documentation pages
   - `user_articles/`: Community-contributed articles by author
+- **Documentation Tree** (`complete_docs/`): Complete MQL5 official documentation
+  - Hierarchical structure mirroring official docs (e.g., `array/`, `basis/`, `trading/`)
+  - 98 pages with internal links converted to relative markdown paths
+  - Full API reference with code examples and tables
 
 **User Folder Naming**: MQL5 uses dual identifiers - some profiles use numeric IDs (`29210372`), others use usernames (`jslopes`, `gamuchiraindawa`). Both are stable, unique identifiers extracted from the article's author meta tag. This is expected MQL5 behavior, not a bug.
 
@@ -498,6 +513,19 @@ cat simple_extraction_results/29210372/article_19625/metadata.json
   - ML/AI integration, trading automation, data analysis, socket communication
 - **Research Documentation**: `/docs/python_research/` (1 file)
 
+#### **Complete Documentation Tree** (`mql5_articles/complete_docs/`)
+
+- **Source**: https://www.mql5.com/en/docs (complete official documentation)
+- **Coverage**: 98 documentation pages across all MQL5 subsystems
+  - Array functions, language basics, constants, custom indicators
+  - Event handlers, trading operations, standard library
+  - Market information, optimization, runtime functions
+- **Extraction**: Playwright-based with anti-detection (5-10s delays)
+- **Content**: 2,063 blocks, 242 code blocks, 313 tables
+- **Link Conversion**: Internal links converted to relative markdown paths
+- **URL Registry**: `complete_docs_urls.txt` (98 URLs)
+- **Statistics**: `extraction_summary.json` (full extraction metrics)
+
 ### **Extraction Scripts**
 
 Located in `/scripts/`:
@@ -507,6 +535,14 @@ Located in `/scripts/`:
   - Processes inline tables and code examples
   - Auto-deletes HTML after conversion
 - **`extract_all_python_docs.sh`**: Batch extraction for all Python API functions
+- **`extract_complete_docs_playwright.py`**: Complete documentation tree extraction
+  - Playwright-based with anti-detection (variable 5-10s delays)
+  - Converts internal links to relative markdown paths
+  - Supports URL discovery and batch extraction
+  - Generates extraction summary with detailed statistics
+- **`quick_discover_urls.py`**: Fast URL discovery using httpx
+  - Discovers documentation URLs without delays (discovery only)
+  - Used to generate `complete_docs_urls.txt` (98 URLs)
 
 ---
 

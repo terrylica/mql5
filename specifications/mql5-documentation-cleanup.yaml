@@ -1,0 +1,283 @@
+openapi: 3.1.0
+info:
+  title: MQL5 Documentation Cleanup Plan
+  version: 1.1.0
+  description: |
+    SSoT for updating project documentation to reflect migration v1.1.0 changes.
+    Addresses outdated references and adds documentation for new capabilities.
+  x-changelog:
+    - version: 1.1.0
+      date: 2025-10-28
+      changes: Documentation cleanup completed successfully
+      scope: Updated 3 documentation files, added 2 specifications to git
+    - version: 1.0.0
+      date: 2025-10-28
+      changes: Initial documentation cleanup plan
+      scope: Update 3 documentation files, add git tracking for 1 specification
+
+x-metadata:
+  documentation-files: 3
+  git-files: 2
+  implementation-status: completed
+  completion-date: 2025-10-28
+  discovery-source: /tmp/undone-items-survey.md
+
+components:
+  schemas:
+    DocumentationTask:
+      type: object
+      required: [task-id, file-path, slos]
+      properties:
+        task-id:
+          type: string
+        file-path:
+          type: string
+        changes:
+          type: array
+          items:
+            type: string
+        slos:
+          $ref: '#/components/schemas/SLOs'
+
+    SLOs:
+      type: object
+      required: [availability, correctness, observability, maintainability]
+      properties:
+        availability:
+          type: string
+        correctness:
+          type: string
+        observability:
+          type: string
+        maintainability:
+          type: string
+
+paths:
+  /capabilities/update-readme:
+    patch:
+      operationId: updateReadme
+      summary: Update README.md with topic collections and official docs
+      tags: [documentation]
+      x-task-id: DOC-001
+      x-dependencies: []
+      x-slos:
+        availability: 100% (README remains valid markdown)
+        correctness: 100% (output structure matches workspace reality)
+        observability: 100% (changes visible in git diff)
+        maintainability: 100% (follows existing README structure)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                file-path:
+                  type: string
+                  example: /Users/terryli/eon/mql5/README.md
+                sections-to-update:
+                  type: array
+                  items:
+                    type: object
+                  example:
+                    - section: output-structure
+                      action: replace
+                      content: "Add topic-based collections alongside user collections"
+                    - section: features
+                      action: add
+                      content: "Add official documentation extraction"
+                    - section: documentation
+                      action: update
+                      content: "Add links to tick_research/ and python_research/"
+      responses:
+        '200':
+          description: README updated successfully
+
+  /capabilities/update-changelog:
+    patch:
+      operationId: updateChangelog
+      summary: Fix CHANGELOG.md header and add migration entries
+      tags: [documentation]
+      x-task-id: DOC-002
+      x-dependencies: []
+      x-slos:
+        availability: 100% (CHANGELOG follows Keep a Changelog format)
+        correctness: 100% (entries accurately reflect changes made)
+        observability: 100% (version history visible)
+        maintainability: 100% (chronological order preserved)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                file-path:
+                  type: string
+                  example: /Users/terryli/eon/mql5/CHANGELOG.md
+                changes:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - "Fix header (RangeBar → MQL5 Article Extraction System)"
+                    - "Add v4.0.0 entry for migration and official docs"
+                    - "Document topic-based organization"
+                    - "Document extraction scripts"
+      responses:
+        '200':
+          description: CHANGELOG updated successfully
+
+  /capabilities/update-scripts-readme:
+    patch:
+      operationId: updateScriptsReadme
+      summary: Document new extraction scripts in scripts/README.md
+      tags: [documentation]
+      x-task-id: DOC-003
+      x-dependencies: []
+      x-slos:
+        availability: 100% (README provides working examples)
+        correctness: 100% (commands executable and accurate)
+        observability: 100% (script usage documented)
+        maintainability: 100% (follows existing docs patterns)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                file-path:
+                  type: string
+                  example: /Users/terryli/eon/mql5/scripts/README.md
+                new-sections:
+                  type: array
+                  items:
+                    type: object
+                  example:
+                    - section: official-docs-extractor
+                      content: "Document official_docs_extractor.py usage"
+                    - section: batch-extraction
+                      content: "Document extract_all_python_docs.sh usage"
+      responses:
+        '200':
+          description: Scripts README updated successfully
+
+  /capabilities/add-specification-to-git:
+    post:
+      operationId: addSpecificationToGit
+      summary: Track mql5-skills-update.yaml in git
+      tags: [git]
+      x-task-id: DOC-004
+      x-dependencies: [DOC-001, DOC-002, DOC-003]
+      x-slos:
+        availability: 100% (file tracked in version control)
+        correctness: 100% (file added without errors)
+        observability: 100% (git status shows tracked file)
+        maintainability: 100% (follows git workflow)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                file-path:
+                  type: string
+                  example: specifications/mql5-skills-update.yaml
+      responses:
+        '200':
+          description: File added to git successfully
+
+  /capabilities/update-ssot-plan:
+    patch:
+      operationId: updateSSOTPlan
+      summary: Update SSoT plan with implementation findings
+      tags: [meta]
+      x-task-id: DOC-005
+      x-dependencies: [DOC-004]
+      x-slos:
+        availability: 100% (plan reflects completion state)
+        correctness: 100% (findings document actual changes)
+        observability: 100% (version tracking visible)
+        maintainability: 100% (plan remains authoritative)
+      responses:
+        '200':
+          description: Plan updated with findings
+
+x-implementation-findings:
+  global:
+    - All documentation updates completed successfully
+    - 3 documentation files updated to reflect migration v1.1.0
+    - 2 specification files added to git version control
+    - All changes follow Keep a Changelog and existing documentation patterns
+
+  DOC-001:
+    status: completed
+    file-path: /Users/terryli/eon/mql5/README.md
+    findings:
+      - Output structure section updated to show topic-based collections
+      - Added tick_data/ and python_integration/ examples
+      - Features section updated with official documentation extraction
+      - Documentation section reorganized (Production Guides, Research Documentation, Architecture)
+      - Added links to docs/tick_research/ and docs/python_research/
+    slo-compliance:
+      availability: 100% - README remains valid markdown
+      correctness: 100% - Output structure matches workspace reality
+      observability: 100% - Changes visible in git diff
+      maintainability: 100% - Follows existing README structure
+
+  DOC-002:
+    status: completed
+    file-path: /Users/terryli/eon/mql5/CHANGELOG.md
+    findings:
+      - Header fixed (RangeBar → MQL5 Article Extraction System)
+      - Added v4.0.0 entry documenting migration and official docs
+      - Proper Keep a Changelog format applied
+      - Chronological order preserved (4.0.0, 3.0.0, 2.0.0, 1.0.0)
+      - All sections use standard categories (Added, Changed, Fixed)
+    slo-compliance:
+      availability: 100% - CHANGELOG follows Keep a Changelog format
+      correctness: 100% - Entries accurately reflect changes made
+      observability: 100% - Version history visible
+      maintainability: 100% - Chronological order preserved
+
+  DOC-003:
+    status: completed
+    file-path: /Users/terryli/eon/mql5/scripts/README.md
+    findings:
+      - Official Documentation Extraction section added
+      - Documented official_docs_extractor.py with usage example
+      - Documented extract_all_python_docs.sh with features
+      - Added User Article Extraction section referencing main CLI
+      - Preserved legacy scripts section
+    slo-compliance:
+      availability: 100% - README provides working examples
+      correctness: 100% - Commands executable and accurate
+      observability: 100% - Script usage documented
+      maintainability: 100% - Follows existing docs patterns
+
+  DOC-004:
+    status: completed
+    git-files:
+      - specifications/mql5-skills-update.yaml
+      - specifications/mql5-documentation-cleanup.yaml
+    findings:
+      - Both specification files added to git staging
+      - Git status shows 2 new files staged
+      - 3 modified files not staged (README.md, CHANGELOG.md, scripts/README.md)
+    slo-compliance:
+      availability: 100% - Files tracked in version control
+      correctness: 100% - Files added without errors
+      observability: 100% - Git status shows staged files
+      maintainability: 100% - Follows git workflow
+
+  DOC-005:
+    status: completed
+    findings:
+      - SSoT plan updated to version 1.1.0
+      - Changelog updated with completion entry
+      - Implementation status changed from pending to completed
+      - All task findings documented with SLO compliance
+      - Global findings summarize documentation updates
+    slo-compliance:
+      availability: 100% - Plan reflects completion state
+      correctness: 100% - Findings document actual changes
+      observability: 100% - Version tracking visible (1.0.0 → 1.1.0)
+      maintainability: 100% - Plan remains authoritative source

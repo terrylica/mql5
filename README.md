@@ -22,7 +22,9 @@ That's it! 🎉
 
 ## ✨ Features
 
-- ✅ **Elegant markdown formatting** with MQL5 syntax highlighting
+- ✅ **User article extraction** with MQL5 syntax highlighting
+- ✅ **Official documentation extraction** (Python MT5 API, TICK functions)
+- ✅ **Topic-based organization** (user collections + research collections)
 - ✅ **Local image downloads** with descriptive filenames
 - ✅ **Batch processing** with checkpoint-based resume
 - ✅ **Retry logic** with exponential backoff
@@ -37,25 +39,52 @@ That's it! 🎉
 
 ```
 mql5_articles/
-├── {user_id}/                  # User folder (numeric ID or username)
-│   ├── article_{id}/
-│   │   ├── article_{id}.md    # Clean markdown with syntax highlighting
-│   │   ├── metadata.json      # Extraction metadata
-│   │   ├── images/            # Local images
-│   │   └── images_manifest.json
+├── 29210372/                   # User collections (77 articles)
 │   └── article_{id}/
+│       ├── article_{id}.md    # Clean markdown with syntax highlighting
+│       ├── metadata.json      # Extraction metadata
+│       └── images/            # Local images
+├── tick_data/                  # Topic collections
+│   ├── official_docs/          # 3 Python MT5 TICK functions
+│   │   ├── copy_ticks_from.md
+│   │   ├── copy_ticks_range.md
+│   │   └── symbol_info_tick.md
+│   └── user_articles/          # 9 articles by author
+│       └── {author}/article_{id}/
+├── python_integration/         # Topic collections
+│   ├── official_docs/          # 32 MT5 Python API functions
+│   │   ├── mt5initialize_py.md
+│   │   └── ...
+│   └── user_articles/          # 15 implementation articles
+│       └── {author}/article_{id}/
 ├── extraction_summary.json     # Batch statistics
-└── logs/
-    └── extraction.log         # Detailed logs
+└── extraction.log             # Detailed logs
 ```
+
+**Content Organization:**
+
+- **User Collections** (e.g., `29210372/`): Articles by specific authors
+- **Topic Collections** (e.g., `tick_data/`, `python_integration/`): Organized by research area
+  - `official_docs/`: Official MQL5 documentation pages
+  - `user_articles/`: Community-contributed articles by author
 
 ---
 
 ## 📚 Documentation
 
+### Production Guides
+
 - **[CLAUDE.md](CLAUDE.md)** - Complete production guide
 - **[docs/dependency_management.md](docs/dependency_management.md)** - UV vs UVX comparison
+
+### Research Documentation
+
+- **[docs/tick_research/](docs/tick_research/)** - TICK data research findings (4 files)
+- **[docs/python_research/](docs/python_research/)** - Python MT5 API research (1 file)
 - **[docs/ood_authors_research.md](docs/ood_authors_research.md)** - OOD detection author research
+
+### Architecture
+
 - **[docs/attachment_extraction_design.md](docs/attachment_extraction_design.md)** - Attachment extraction architecture
 - **[docs/attachment_extraction_test_results.md](docs/attachment_extraction_test_results.md)** - Test validation results
 

@@ -11,6 +11,173 @@ Handles official docs structure which is completely different from user articles
 
 from bs4 import BeautifulSoup
 import sys
+from urllib.parse import urlparse, urljoin
+import re
+
+
+def extract_text_with_links(element) -> str:
+    """Extract text from element, converting <a> tags to markdown links.
+
+    Args:
+        element: BeautifulSoup element
+
+    Returns:
+        Text with markdown links
+    """
+    result = []
+
+    def process_node(node):
+        """Recursively process nodes to build text with markdown links."""
+        if isinstance(node, str):
+            # Text node
+            return node
+        elif node.name == 'a' and node.get('href'):
+            # Link - convert to markdown
+            link_text = node.get_text()
+            href = node['href']
+            # Sanitize malformed URLs (extraction artifacts)
+            malformed_indicators = ['%C2%A0', 'https:/www', 'http:/www']
+            if any(pattern in href for pattern in malformed_indicators):
+                return link_text  # Return text only, skip broken link
+            return f'[{link_text}]({href})'
+        else:
+            # Other element - process children
+            parts = []
+            for child in node.children:
+                parts.append(process_node(child))
+            return ''.join(parts)
+
+    return process_node(element).strip()
+
+
+def convert_links_to_relative(soup, current_url: str, docs_base: str = '/en/docs') -> None:
+    """Convert internal documentation links to relative markdown paths.
+
+    Modifies soup in-place, converting:
+    - https://www.mql5.com/en/docs/ABC/xyz → ../ABC/xyz.md
+    - /en/docs/ABC/xyz → ../ABC/xyz.md
+    - /en/docs/ABC/xyz#section → ../ABC/xyz.md#section
+    - External links → unchanged
+
+    Args:
+        soup: BeautifulSoup object to modify
+        current_url: Current page URL (e.g., 'https://www.mql5.com/en/docs/basis/syntax')
+        docs_base: Base path for docs (default: '/en/docs')
+    """
+
+    # Extract current path from URL
+    parsed = urlparse(current_url)
+    current_path = parsed.path  # e.g., '/en/docs/basis/syntax'
+
+    # Validate current path starts with docs_base
+    if not current_path.startswith(docs_base):
+        raise ValueError(f"Current URL path '{current_path}' does not start with docs_base '{docs_base}'")
+
+    # Get current page's relative path within docs (e.g., 'basis/syntax')
+    current_relative = current_path[len(docs_base):].lstrip('/')
+    # Depth = number of directory levels (slashes), NOT +1
+    # For 'dateandtime/timelocal', depth is 1 (one dir to escape)
+    # The old + 1 caused links to escape out of complete_docs/
+    current_depth = current_relative.count('/') if current_relative else 0
+
+    # Find all links
+    for a_tag in soup.find_all('a', href=True):
+        href = a_tag['href']
+
+        # Parse the link
+        link_parsed = urlparse(href)
+
+        # Check if it's an internal docs link
+        is_internal = False
+        target_path = None
+        anchor = link_parsed.fragment
+
+        if link_parsed.netloc == 'www.mql5.com' or link_parsed.netloc == 'mql5.com':
+            # Absolute URL to MQL5.com
+            if link_parsed.path.startswith(docs_base):
+                is_internal = True
+                target_path = link_parsed.path
+        elif not link_parsed.netloc and link_parsed.path.startswith(docs_base):
+            # Relative URL starting with /en/docs
+            is_internal = True
+            target_path = link_parsed.path
+        elif not link_parsed.netloc and link_parsed.path and not link_parsed.path.startswith('/'):
+            # Relative path (rare but possible)
+            # Resolve it relative to current URL
+            absolute = urljoin(current_url, href)
+            resolved_parsed = urlparse(absolute)
+            if resolved_parsed.path.startswith(docs_base):
+                is_internal = True
+                target_path = resolved_parsed.path
+
+        if is_internal and target_path:
+            # Extract relative path within docs
+            target_relative = target_path[len(docs_base):].lstrip('/')
+
+            # Calculate relative path from current page to target
+            if not target_relative:
+                # Link to docs index
+                relative_link = '../' * current_depth + 'index.md'
+            else:
+                # Calculate path
+                relative_link = '../' * current_depth + target_relative + '.md'
+
+            # Add anchor if present
+            if anchor:
+                relative_link += '#' + anchor
+
+            # Update the href
+            a_tag['href'] = relative_link
+
+
+def is_code_table(table_element) -> bool:
+    """Detect if a table contains code (should be skipped in favor of p_CodeExample).
+
+    MQL5 docs often duplicate code in both <table> and <p class="p_CodeExample">.
+    This function identifies tables that contain code rather than semantic data.
+
+    Detection heuristics:
+    1. Single-cell tables (1x1) are usually function signatures
+    2. Tables with MQL5 keywords indicate code content
+    3. Tables with code formatting indicators
+
+    Returns:
+        True if table appears to contain code (should be skipped)
+    """
+    rows = table_element.find_all('tr')
+
+    # Get all cell text
+    all_text = table_element.get_text()
+
+    # MQL5 code indicators
+    mql5_keywords = [
+        'void ', 'int ', 'double ', 'bool ', 'string ', 'float ', 'long ', 'datetime ',
+        'color ', 'char ', 'uchar ', 'short ', 'ushort ', 'uint ', 'ulong ',
+        '#include', '#define', '#property',
+        'return(', 'if(', 'for(', 'while(',
+        'ArrayResize(', 'ArrayFree(', 'ArraySize(',
+        'class ', 'public:', 'private:', 'protected:',
+        '//---', '//+--',  # MQL5 comment style
+    ]
+
+    # Check for code indicators
+    for keyword in mql5_keywords:
+        if keyword in all_text:
+            return True
+
+    # Single-cell tables with curly braces or function signatures
+    if len(rows) == 1:
+        cells = rows[0].find_all(['td', 'th'])
+        if len(cells) == 1:
+            cell_text = cells[0].get_text()
+            # Function signature patterns
+            if '(' in cell_text and ')' in cell_text:
+                return True
+            # Block delimiters
+            if '{' in cell_text or '}' in cell_text:
+                return True
+
+    return False
 
 
 def extract_official_docs(html_path: str, source_url: str = None) -> dict:
@@ -23,6 +190,10 @@ def extract_official_docs(html_path: str, source_url: str = None) -> dict:
 
     with open(html_path, 'r', encoding='utf-8') as f:
         soup = BeautifulSoup(f, 'html.parser')
+
+    # Convert internal links to relative markdown paths (if source URL provided)
+    if source_url:
+        convert_links_to_relative(soup, source_url)
 
     # Find main container
     container = soup.find('div', class_='docsContainer')
@@ -40,11 +211,15 @@ def extract_official_docs(html_path: str, source_url: str = None) -> dict:
     # Find all relevant elements (p and table tags) in document order
     for element in container.find_all(['p', 'table'], recursive=True):
         if element.name == 'table':
+            # Skip tables that contain code (will be captured by p_CodeExample)
+            if is_code_table(element):
+                continue
+
             # Save any pending code block first
             if current_code_block:
                 content_blocks.append({
                     'type': 'code',
-                    'language': 'python',
+                    'language': 'mql5',
                     'text': '\n'.join(current_code_block)
                 })
                 current_code_block = []
@@ -70,7 +245,7 @@ def extract_official_docs(html_path: str, source_url: str = None) -> dict:
             continue
 
         p_class = classes[0]  # Primary class
-        text = p.get_text().strip()
+        text = extract_text_with_links(p)
 
         if p_class == 'p_Function':
             # Function description
@@ -114,7 +289,7 @@ def extract_official_docs(html_path: str, source_url: str = None) -> dict:
             if current_code_block:
                 content_blocks.append({
                     'type': 'code',
-                    'language': 'python',
+                    'language': 'mql5',
                     'text': '\n'.join(current_code_block)
                 })
                 current_code_block = []
@@ -164,7 +339,7 @@ def extract_official_docs(html_path: str, source_url: str = None) -> dict:
     if current_code_block:
         content_blocks.append({
             'type': 'code',
-            'language': 'python',
+            'language': 'mql5',
             'text': '\n'.join(current_code_block)
         })
 

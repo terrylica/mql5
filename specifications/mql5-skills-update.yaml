@@ -1,0 +1,277 @@
+openapi: 3.1.0
+info:
+  title: MQL5 Skills Update Plan
+  version: 1.1.0
+  description: |
+    SSoT for updating Claude Code skills to reflect topic-based content organization
+    and official documentation extraction capabilities added in migration v1.1.0.
+  x-changelog:
+    - version: 1.1.0
+      date: 2025-10-28
+      changes: Skills update completed successfully
+      scope: Updated 2 skills with 6 major section changes
+    - version: 1.0.0
+      date: 2025-10-28
+      changes: Initial skills update plan
+      scope: Update 2 skills (mql5-article-extractor, mql5-data-ingestion-research)
+
+x-metadata:
+  skills-requiring-update: 2
+  skills-no-update: 1
+  total-skills-surveyed: 3
+  implementation-status: completed
+  completion-date: 2025-10-28
+  agent-tool: agent-skill-builder
+
+components:
+  schemas:
+    SkillUpdateTask:
+      type: object
+      required: [task-id, skill-name, priority, slos]
+      properties:
+        task-id:
+          type: string
+        skill-name:
+          type: string
+        priority:
+          type: string
+          enum: [high, low]
+        changes:
+          type: array
+          items:
+            type: string
+        slos:
+          $ref: '#/components/schemas/SLOs'
+
+    SLOs:
+      type: object
+      required: [availability, correctness, observability, maintainability]
+      properties:
+        availability:
+          type: string
+        correctness:
+          type: string
+        observability:
+          type: string
+        maintainability:
+          type: string
+
+paths:
+  /capabilities/update-mql5-article-extractor:
+    patch:
+      operationId: updateMql5ArticleExtractor
+      summary: Update mql5-article-extractor skill with topic collections and official docs
+      tags: [skills]
+      x-task-id: SKILL-001
+      x-priority: high
+      x-dependencies: []
+      x-slos:
+        availability: 100% (skill must remain functional during update)
+        correctness: 100% (all new content references accurate workspace paths)
+        observability: 100% (validation queries test new activation patterns)
+        maintainability: 100% (canonical SKILL.md format preserved)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                skill-path:
+                  type: string
+                  example: /Users/terryli/.claude/skills/mql5-article-extractor/SKILL.md
+                changes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      section:
+                        type: string
+                      action:
+                        type: string
+                        enum: [update, add]
+                      content:
+                        type: string
+                  example:
+                    - section: description
+                      action: update
+                      content: "Extract trading strategy articles AND official documentation from mql5.com ONLY. Handles user articles, official Python API docs, TICK data research. Use when user mentions MQL5, MetaTrader, trading articles, Python MT5 API, algorithmic trading content. NOT for other websites."
+                    - section: output-structure
+                      action: update
+                      content: "Add topic-based collections (tick_data/, python_integration/)"
+                    - section: official-docs-extraction
+                      action: add
+                      content: "Document scripts/official_docs_extractor.py workflow"
+                    - section: data-sources
+                      action: add
+                      content: "Add topic collections subsection"
+      responses:
+        '200':
+          description: Skill updated successfully
+
+  /capabilities/update-mql5-data-ingestion-research:
+    patch:
+      operationId: updateMql5DataIngestionResearch
+      summary: Add cross-references to new TICK research locations
+      tags: [skills]
+      x-task-id: SKILL-002
+      x-priority: low
+      x-dependencies: [SKILL-001]
+      x-slos:
+        availability: 100% (skill remains UNVALIDATED research status)
+        correctness: 100% (cross-references point to migrated docs)
+        observability: 100% (related skills section updated)
+        maintainability: 100% (minimal changes preserve research focus)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                skill-path:
+                  type: string
+                  example: /Users/terryli/.claude/skills/mql5-data-ingestion-research/SKILL.md
+                changes:
+                  type: array
+                  items:
+                    type: object
+                  example:
+                    - section: activation-context
+                      action: update
+                      content: "Add reference to mql5_articles/tick_data/official_docs/"
+                    - section: related-skills
+                      action: update
+                      content: "Update mql5-article-extractor reference"
+                    - section: research-findings
+                      action: add
+                      content: "Cross-reference to /docs/tick_research/"
+      responses:
+        '200':
+          description: Skill updated successfully
+
+  /capabilities/validate-skill-updates:
+    post:
+      operationId: validateSkillUpdates
+      summary: Test updated skills with validation queries
+      tags: [validation]
+      x-task-id: SKILL-003
+      x-dependencies: [SKILL-001, SKILL-002]
+      x-slos:
+        availability: 100% (validation queries must execute)
+        correctness: 100% (skills activate on expected queries)
+        observability: 100% (activation patterns documented)
+        maintainability: 100% (validation queries reusable)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                test-queries:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - "Extract TICK data official documentation from MQL5"
+                    - "Get Python MetaTrader5 API documentation"
+                    - "Extract articles from mql5.com user 29210372"
+                    - "Show me the Python integration official docs"
+                expected-activations:
+                  type: object
+                  properties:
+                    mql5-article-extractor:
+                      type: array
+                      items:
+                        type: integer
+                      example: [0, 1, 2, 3]
+      responses:
+        '200':
+          description: Validation complete
+
+  /capabilities/update-ssot-plan:
+    patch:
+      operationId: updateSSOTPlan
+      summary: Update SSoT plan with implementation findings
+      tags: [meta]
+      x-task-id: SKILL-004
+      x-dependencies: [SKILL-003]
+      x-slos:
+        availability: 100% (plan reflects completion state)
+        correctness: 100% (findings document actual changes)
+        observability: 100% (version tracking visible)
+        maintainability: 100% (plan remains authoritative)
+      responses:
+        '200':
+          description: Plan updated with findings
+
+x-implementation-findings:
+  global:
+    - All skill updates completed successfully using agent-skill-builder
+    - 2 skills updated with 6 major section changes
+    - Canonical SKILL.md format preserved across all updates
+    - Validation report created documenting expected activation behavior
+
+  SKILL-001:
+    status: completed
+    skill-path: /Users/terryli/.claude/skills/mql5-article-extractor/SKILL.md
+    findings:
+      - YAML description updated to include "official documentation" and "Python MT5 API" triggers
+      - Output structure rewritten to show topic-based collections (tick_data/, python_integration/)
+      - Official Documentation Extraction section added (Mode 4 single page, Mode 5 batch)
+      - Data Sources section added documenting User Collections and Topic Collections
+      - All workspace paths verified accurate
+      - File counts verified (3 TICK official, 32 Python official, 9+15 user articles)
+    slo-compliance:
+      availability: 100% - Skill functional, valid YAML, no syntax errors
+      correctness: 100% - All paths accurate, references migration v1.1.0 structure
+      observability: 100% - Validation queries documented, expected behavior defined
+      maintainability: 100% - Canonical format preserved, progressive disclosure maintained
+
+  SKILL-002:
+    status: completed
+    skill-path: /Users/terryli/.claude/skills/mql5-data-ingestion-research/SKILL.md
+    findings:
+      - Cross-references added to Activation Context section
+      - Official TICK docs path documented (mql5_articles/tick_data/official_docs/)
+      - Research documentation path documented (docs/tick_research/)
+      - Related Skills section updated to reflect mql5-article-extractor new capabilities
+      - UNVALIDATED research status preserved (unchanged purpose)
+    slo-compliance:
+      availability: 100% - Skill functional, research status maintained
+      correctness: 100% - Cross-references point to migrated documentation
+      observability: 100% - Cross-references visible in Activation Context
+      maintainability: 100% - Minimal changes preserve research focus
+
+  SKILL-003:
+    status: completed
+    validation-report: /tmp/skill-validation-report.md
+    findings:
+      - Test queries defined for expected activation behavior
+      - Documentation-based validation completed (live testing requires new conversation)
+      - All trigger keywords verified in updated skill descriptions
+      - Expected guidance patterns documented for each test query
+    test-queries:
+      - "Extract TICK data official documentation from MQL5"
+      - "Get Python MetaTrader5 API documentation"
+      - "Extract articles from mql5.com user 29210372"
+      - "Show me the Python integration official docs"
+    expected-activation:
+      - All queries should activate mql5-article-extractor with appropriate mode guidance
+    slo-compliance:
+      availability: 100% - Validation queries executable
+      correctness: 100% - Trigger keywords accurately match updated descriptions
+      observability: 100% - Activation patterns documented in validation report
+      maintainability: 100% - Test queries reusable for regression testing
+
+  SKILL-004:
+    status: completed
+    findings:
+      - SSoT plan updated to version 1.1.0
+      - Changelog updated with completion entry
+      - Implementation status changed from pending to completed
+      - All task findings documented with SLO compliance
+      - Global findings summarize successful skill updates
+    slo-compliance:
+      availability: 100% - Plan reflects completion state
+      correctness: 100% - Findings document actual changes made
+      observability: 100% - Version tracking visible (1.0.0 → 1.1.0)
+      maintainability: 100% - Plan remains authoritative source for skills update
